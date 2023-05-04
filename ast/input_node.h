@@ -1,18 +1,18 @@
-#ifndef __MML_AST_READ_NODE_H__
-#define __MML_AST_READ_NODE_H__
+#ifndef __MML_AST_INPUT_NODE_H__
+#define __MML_AST_INPUT_NODE_H__
 
 #include <cdk/ast/lvalue_node.h>
 
 namespace mml {
 
   /**
-   * Class for describing read nodes.
+   * Class for describing input nodes.
    */
-  class read_node: public cdk::basic_node {
+  class input_node: public cdk::basic_node {
     cdk::lvalue_node *_argument;
 
   public:
-    inline read_node(int lineno, cdk::lvalue_node *argument) :
+    inline input_node(int lineno, cdk::lvalue_node *argument) :
         cdk::basic_node(lineno), _argument(argument) {
     }
 
@@ -22,7 +22,7 @@ namespace mml {
     }
 
     void accept(basic_ast_visitor *sp, int level) {
-      sp->do_read_node(this, level);
+      sp->do_input_node(this, level);
     }
 
   };
