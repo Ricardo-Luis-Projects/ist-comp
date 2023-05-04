@@ -229,8 +229,6 @@ void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   _pf.CALL("readi");
   _pf.LDFVAL32();
-  node->argument()->accept(this, lvl);
-  _pf.STINT();
 }
 
 //---------------------------------------------------------------------------
