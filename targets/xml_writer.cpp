@@ -127,7 +127,7 @@ void mml::xml_writer::do_assignment_node(cdk::assignment_node * const node, int 
 
 //---------------------------------------------------------------------------
 
-void mml::xml_writer::do_program_node(mml::program_node * const node, int lvl) {
+void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
   openTag(node, lvl);
   node->statements()->accept(this, lvl + 4);
   closeTag(node, lvl);

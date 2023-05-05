@@ -153,7 +153,7 @@ void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int
 
 //---------------------------------------------------------------------------
 
-void mml::type_checker::do_program_node(mml::program_node *const node, int lvl) {
+void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {
   // EMPTY
 }
 
