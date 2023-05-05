@@ -137,7 +137,7 @@ void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
-  openTag(node, lvl);
+  openTag(node->label() + (node->main() ? " main=true" : " main=false"), lvl);
   node->arguments()->accept(this, lvl + 4);
   node->block()->accept(this, lvl + 4);
   closeTag(node, lvl);
