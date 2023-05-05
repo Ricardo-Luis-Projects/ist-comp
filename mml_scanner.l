@@ -22,10 +22,11 @@
 "=="                   return tEQ; 
 "!="                   return tNE; 
 
+"!!"                   return tPRINTLN;
+
 "while"                return tWHILE; 
 "if"                   return tIF; 
 "else"                 return tELSE; 
-"print"                return tPRINT; 
 "input"                return tINPUT; 
 "begin"                return tBEGIN; 
 "end"                  return tEND; 
