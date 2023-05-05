@@ -161,6 +161,12 @@ void mml::xml_writer::do_null_node(mml::null_node *const node, int lvl) {
   closeTag(node, lvl);
 }
 
+void mml::xml_writer::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
+  openTag(node, lvl);
+  node->expression()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
