@@ -173,6 +173,18 @@ void mml::postfix_writer::do_return_node(mml::return_node *const node, int lvl) 
   // EMPTY
 }
 
+void mml::postfix_writer::do_loop_flow_control_node(mml::loop_flow_control_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_stop_node(mml::stop_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_next_node(mml::next_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
