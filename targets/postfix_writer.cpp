@@ -164,11 +164,14 @@ void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, 
 
 //---------------------------------------------------------------------------
 
+void mml::postfix_writer::do_block_node(mml::block_node *const node, int lvl) {
+  node->declarations()->accept(this, lvl);
+  node->instructions()->accept(this, lvl);
+}
+
+//---------------------------------------------------------------------------
+
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
-  // Note that MML doesn't have functions. Thus, it doesn't need
-  // a function node. However, it must start in the main function.
-  // The ProgramNode (representing the whole program) doubles as a
-  // main function node.
 
   // generate the main function (RTS mandates that its name be "_main")
   _pf.TEXT();
@@ -177,7 +180,7 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
   _pf.LABEL("_main");
   _pf.ENTER(0);  // MML doesn't implement local variables
 
-  node->statements()->accept(this, lvl);
+  node->block()->accept(this, lvl);
 
   // end the main function
   _pf.INT(0);

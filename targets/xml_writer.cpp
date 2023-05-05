@@ -127,9 +127,19 @@ void mml::xml_writer::do_assignment_node(cdk::assignment_node * const node, int 
 
 //---------------------------------------------------------------------------
 
+void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
+  openTag(node, lvl);
+  node->declarations()->accept(this, lvl + 4);
+  node->instructions()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
   openTag(node, lvl);
-  node->statements()->accept(this, lvl + 4);
+  node->arguments()->accept(this, lvl + 4);
+  node->block()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
