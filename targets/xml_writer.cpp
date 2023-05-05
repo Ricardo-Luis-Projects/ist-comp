@@ -156,6 +156,11 @@ void mml::xml_writer::do_next_node(mml::next_node *const node, int lvl) {
   closeTag(node, lvl);
 }
 
+void mml::xml_writer::do_null_node(mml::null_node *const node, int lvl) {
+  openTag(node, lvl);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {

@@ -185,6 +185,10 @@ void mml::postfix_writer::do_next_node(mml::next_node *const node, int lvl) {
   // EMPTY
 }
 
+void mml::postfix_writer::do_null_node(mml::null_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
