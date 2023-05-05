@@ -169,6 +169,10 @@ void mml::postfix_writer::do_block_node(mml::block_node *const node, int lvl) {
   node->instructions()->accept(this, lvl);
 }
 
+void mml::postfix_writer::do_return_node(mml::return_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {

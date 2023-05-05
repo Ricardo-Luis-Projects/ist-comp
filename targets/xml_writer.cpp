@@ -134,6 +134,12 @@ void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
   closeTag(node, lvl);
 }
 
+void mml::xml_writer::do_return_node(mml::return_node *const node, int lvl) {
+  openTag(node, lvl);
+  node->retval()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {

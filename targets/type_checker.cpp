@@ -157,6 +157,10 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
   // EMPTY
 }
 
+void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {
