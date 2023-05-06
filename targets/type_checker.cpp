@@ -161,10 +161,6 @@ void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
   // EMPTY
 }
 
-void mml::type_checker::do_loop_flow_control_node(mml::loop_flow_control_node *const node, int lvl) {
-  // EMPTY
-}
-
 void mml::type_checker::do_stop_node(mml::stop_node *const node, int lvl) {
   // EMPTY
 }

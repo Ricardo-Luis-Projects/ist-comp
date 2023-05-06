@@ -12,7 +12,7 @@ namespace mml {
   class loop_flow_control_node : public cdk::basic_node {
     cdk::integer_node *_cycle;
 
-  public:
+  protected:
     inline loop_flow_control_node(int lineno) :
         cdk::basic_node(lineno), _cycle(new cdk::integer_node(lineno, 1)) {
     }
@@ -24,10 +24,6 @@ namespace mml {
   public:
     inline cdk::integer_node *cycle() {
       return _cycle;
-    }
-
-    void accept(basic_ast_visitor *sp, int level) {
-      sp->do_loop_flow_control_node(this, level);
     }
   };
 
