@@ -178,7 +178,7 @@ void mml::xml_writer::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
 }
 
 void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
-  os() << "<" << node->label() << " name='" << node->name() << '\'';
+  os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->name() << '\'';
   if (node->qualifier() != 0) {
     os() << " qualifier='" << qualifier_name(node->qualifier()) << '\'';
   }
@@ -205,6 +205,10 @@ void mml::xml_writer::do_function_call_node(mml::function_call_node *const node,
   node->arguments()->accept(this, lvl + 4);
   closeTag("arguments", lvl + 2);
   closeTag(node, lvl);
+}
+
+void mml::xml_writer::do_function_self_node(mml::function_self_node *const node, int lvl) {
+  os() << std::string(lvl, ' ') << "<" << node->label() << "></" << node->label() << ">" << std::endl;
 }
 
 //---------------------------------------------------------------------------
