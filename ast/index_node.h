@@ -13,19 +13,19 @@ namespace mml {
     cdk::expression_node *_index;
 
   public:
-    index_node(int lineno, cdk::expression_node *base, cdk::expression_node *index) :
+    inline index_node(int lineno, cdk::expression_node *base, cdk::expression_node *index) :
         cdk::lvalue_node(lineno), _base(base), _index(index) {
     }
 
   public:
-    cdk::expression_node* base() {
+    inline cdk::expression_node* base() {
       return _base;
     }
-    cdk::expression_node* index() {
+
+    inline cdk::expression_node* index() {
       return _index;
     }
 
-  public:
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_index_node(this, level);
     }
