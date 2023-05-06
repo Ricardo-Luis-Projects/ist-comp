@@ -6,7 +6,7 @@
 namespace mml {
 
   /**
-   * Class for describing size-of nodes.
+   * Class for describing stack allocation nodes.
    */
   class stack_alloc_node: public cdk::unary_operation_node {
   public:
