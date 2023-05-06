@@ -1,5 +1,5 @@
-#ifndef __MML_AST_POS_NODE_H__
-#define __MML_AST_POS_NODE_H__
+#ifndef __MML_AST_IDENTITY_NODE_H__
+#define __MML_AST_IDENTITY_NODE_H__
 
 #include <cdk/ast/unary_operation_node.h>
 
