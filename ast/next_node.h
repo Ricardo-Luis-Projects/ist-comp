@@ -20,10 +20,10 @@ namespace mml {
     }
 
   public:
-
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_next_node(this, level);
     }
+
   };
 
 } // mml
