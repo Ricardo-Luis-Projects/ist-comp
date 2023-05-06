@@ -1,7 +1,7 @@
 #ifndef __MML_AST_STOP_NODE_H__
 #define __MML_AST_STOP_NODE_H__
 
-#include "ast/loop_flow_control_node.h"
+#include <ast/loop_flow_control_node.h>
 
 namespace mml {
 

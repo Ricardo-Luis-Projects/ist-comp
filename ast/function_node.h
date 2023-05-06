@@ -3,7 +3,7 @@
 
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/sequence_node.h>
-#include "ast/block_node.h"
+#include <ast/block_node.h>
 
 namespace mml {
 
