@@ -181,6 +181,10 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   // EMPTY
 }
 
+void mml::type_checker::do_function_call_node(mml::function_call_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {

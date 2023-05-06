@@ -196,6 +196,17 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
   closeTag(node, lvl);
 }
 
+void mml::xml_writer::do_function_call_node(mml::function_call_node *const node, int lvl) {
+  openTag(node, lvl);
+  openTag("function", lvl + 2);
+  node->function()->accept(this, lvl + 4);
+  closeTag("function", lvl + 2);
+  openTag("arguments", lvl + 2);
+  node->arguments()->accept(this, lvl + 4);
+  closeTag("arguments", lvl + 2);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
