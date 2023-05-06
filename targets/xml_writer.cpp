@@ -2,6 +2,20 @@
 #include "targets/xml_writer.h"
 #include "targets/type_checker.h"
 #include ".auto/all_nodes.h"  // automatically generated
+#include "mml_parser.tab.h"
+
+static const char* qualifier_name(int qualifier) {
+  switch (qualifier) {
+    case tFORWARD:
+      return "forward";
+    case tFOREIGN:
+      return "foreign";
+    case tPUBLIC:
+      return "public";
+    default:
+      return "unknown";
+  }
+}
 
 //---------------------------------------------------------------------------
 
@@ -160,6 +174,25 @@ void mml::xml_writer::do_null_node(mml::null_node *const node, int lvl) {
 void mml::xml_writer::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
   openTag(node, lvl);
   node->expression()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
+void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
+  os() << "<" << node->label() << " name='" << node->name() << '\'';
+  if (node->qualifier() != 0) {
+    os() << " qualifier='" << qualifier_name(node->qualifier()) << '\'';
+  }
+  if (node->type() != nullptr) {
+    os() << " type='" << cdk::to_string(node->type()) << '\'';
+  }
+  os() << ">" << std::endl;
+
+  if (node->initializer()) {
+    openTag("initializer", lvl);
+    node->initializer()->accept(this, lvl + 4);
+    closeTag("initializer", lvl);
+  }
+
   closeTag(node, lvl);
 }
 

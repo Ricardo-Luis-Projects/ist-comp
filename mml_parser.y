@@ -34,7 +34,7 @@
 
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tSTRING
-%token tWHILE tIF tPRINTLN tINPUT tBEGIN tEND
+%token tWHILE tIF tPRINTLN tINPUT tBEGIN tEND tFORWARD tFOREIGN tPUBLIC
 
 %nonassoc tIFX
 %nonassoc tELSE
