@@ -217,6 +217,29 @@ void mml::xml_writer::do_identity_node(mml::identity_node *const node, int lvl) 
   closeTag(node, lvl);
 }
 
+void mml::xml_writer::do_index_node(mml::index_node *const node, int lvl) {
+  openTag(node, lvl);
+  openTag("base", lvl);
+  node->base()->accept(this, lvl + 2);
+  closeTag("base", lvl);
+  openTag("index", lvl);
+  node->index()->accept(this, lvl + 2);
+  closeTag("index", lvl);
+  closeTag(node, lvl);
+}
+
+void mml::xml_writer::do_address_of_node(mml::address_of_node *const node, int lvl) {
+  openTag(node, lvl);
+  node->lvalue()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+void mml::xml_writer::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {

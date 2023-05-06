@@ -193,6 +193,18 @@ void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl
   // EMPTY
 }
 
+void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_address_of_node(mml::address_of_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {
