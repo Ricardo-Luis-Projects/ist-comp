@@ -21,9 +21,9 @@ namespace mml {
       type(cdk::primitive_type::create(0, cdk::TYPE_VOID));
     }
 
-    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, bool main, std::shared_ptr<cdk::basic_type> funType) :
+    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, bool main, std::shared_ptr<cdk::basic_type> funtype) :
         cdk::expression_node(lineno), _arguments(arguments), _block(block), _main(main) {
-      type(funType);
+      type(funtype);
     }
 
   public:
