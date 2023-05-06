@@ -211,6 +211,12 @@ void mml::xml_writer::do_function_self_node(mml::function_self_node *const node,
   os() << std::string(lvl, ' ') << "<" << node->label() << "></" << node->label() << ">" << std::endl;
 }
 
+void mml::xml_writer::do_identity_node(mml::identity_node *const node, int lvl) {
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
