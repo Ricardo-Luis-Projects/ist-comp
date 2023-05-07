@@ -173,7 +173,7 @@ void mml::xml_writer::do_null_node(mml::null_node *const node, int lvl) {
 
 void mml::xml_writer::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
   openTag(node, lvl);
-  node->expression()->accept(this, lvl + 4);
+  node->argument()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
