@@ -33,6 +33,7 @@
 "forward"              return tFORWARD; 
 "foreign"              return tFOREIGN; 
 "public"               return tPUBLIC; 
+"auto"                 return tAUTO; 
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 

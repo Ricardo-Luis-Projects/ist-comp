@@ -34,7 +34,7 @@
 
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tSTRING
-%token tWHILE tIF tPRINTLN tINPUT tBEGIN tEND tFORWARD tFOREIGN tPUBLIC
+%token tWHILE tIF tPRINTLN tINPUT tBEGIN tEND tFORWARD tFOREIGN tPUBLIC tAUTO
 
 %nonassoc tIFX
 %nonassoc tELSE
@@ -46,21 +46,64 @@
 %nonassoc tUNARY
 
 %type <node> stmt program
-%type <sequence> list exprs
+%type <sequence> list exprs file declarations
 %type <expression> expr
 %type <lvalue> lval
+%type <i> public_or_foreign
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
 %}
 %%
 
-program : tBEGIN list tEND { compiler->ast(mml::function_node::create_main(LINE, new mml::block_node(LINE, new cdk::sequence_node(LINE), $2))); }
+file : global_declarations         { compiler->ast($$ = $1); }
+     | global_declarations program { compiler->ast($$ = new cdk::sequence_node(LINE, $2, $1)); }
+     ;
+
+global_declarations : /* empty */                                { $$ = new cdk::sequence_node(LINE); }
+                    |                     global_declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
+                    | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
+                    ;
+
+global_declaration : public_or_foreign opt_auto_or_type tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, $1, $3, $4, $2); }
+                   | public_or_foreign type             tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, $1, $3, $4, $2); }
+                   | tFORWARD          type             tIDENTIFIER                 { $$ = new mml::variable_declaration_node(LINE, $1, $3, nullptr, $2); }
+                   | declaration                                                    { $$ = $1; }
+                   ;
+
+declarations : /* empty */                  { $$ = new cdk::sequence_node(LINE); }
+             |              declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
+             | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
+             ;
+
+declaration : auto_or_type tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, 0, $2, $3, $1); }
+            | type         tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, 0, $2, $3, $1); }
+            ;
+
+public_or_foreign : tPUBLIC  { $$ = tPUBLIC; }
+                  | tFOREIGN { $$ = tFOREIGN; }
+                  ;
+
+opt_auto_or_type : /* empty */  { $$ = nullptr; }
+                 | auto_or_type { $$ = $1; }
+                 ;
+
+auto_or_type : tAUTO { $$ = nullptr; }
+             | type  { $$ = $1; }
+             ;
+
+program : tBEGIN inner_block tEND { $$ = mml::function_node::create_main(LINE, $2); }
 	   ;
 
-list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
-	   | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
-	   ;
+block : '{' inner_block '}' { $$ = $2; }
+
+inner_block : declarations instructions { $$ = new mml::block_node(LINE, $1, $2); }
+            ;
+
+instructions : /* empty */                   { $$ = new cdk::sequence_node(LINE); }
+             |              instruction	     { $$ = new cdk::sequence_node(LINE, $1); }
+	        | instructions instruction      { $$ = new cdk::sequence_node(LINE, $2, $1); }
+	        ;
 
 stmt : expr ';'                         { $$ = new mml::evaluation_node(LINE, $1); }
  	| exprs '!'                         { $$ = new mml::print_node(LINE, $1, false); }
