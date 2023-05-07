@@ -16,10 +16,16 @@ namespace mml {
     bool _main;
 
   public:
-    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> funtype, bool main = false) :
+    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> funtype) :
+        function_node(lineno, arguments, block, funtype, false) {
+    }
+
+  protected:
+    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> funtype, bool main) :
         cdk::expression_node(lineno), _arguments(arguments), _block(block), _main(main) {
       type(funtype);
     }
+    
 
   public:
     inline cdk::sequence_node *arguments() {
@@ -36,6 +42,16 @@ namespace mml {
 
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_function_node(this, level);
+    }
+
+  public:
+     /**
+     * Creates a new function node to represent the main function. 
+     */
+    static function_node* create_main(int lineno, mml::block_node *block) {
+      auto arguments = new cdk::sequence_node(lineno);
+      auto type = cdk::functional_type::create(cdk::primitive_type::create(4, cdk::TYPE_INT));
+      return new function_node(lineno, arguments, block, type, true);
     }
 
   };
