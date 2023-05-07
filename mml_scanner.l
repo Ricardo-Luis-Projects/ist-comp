@@ -22,13 +22,17 @@
 "=="                   return tEQ; 
 "!="                   return tNE; 
 
+"!!"                   return tPRINTLN;
+
 "while"                return tWHILE; 
 "if"                   return tIF; 
 "else"                 return tELSE; 
-"print"                return tPRINT; 
-"read"                 return tREAD; 
+"input"                return tINPUT; 
 "begin"                return tBEGIN; 
 "end"                  return tEND; 
+"forward"              return tFORWARD; 
+"foreign"              return tFOREIGN; 
+"public"               return tPUBLIC; 
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 

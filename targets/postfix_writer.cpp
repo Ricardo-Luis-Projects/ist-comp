@@ -164,11 +164,62 @@ void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, 
 
 //---------------------------------------------------------------------------
 
-void mml::postfix_writer::do_program_node(mml::program_node * const node, int lvl) {
-  // Note that MML doesn't have functions. Thus, it doesn't need
-  // a function node. However, it must start in the main function.
-  // The ProgramNode (representing the whole program) doubles as a
-  // main function node.
+void mml::postfix_writer::do_block_node(mml::block_node *const node, int lvl) {
+  node->declarations()->accept(this, lvl);
+  node->instructions()->accept(this, lvl);
+}
+
+void mml::postfix_writer::do_return_node(mml::return_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_stop_node(mml::stop_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_next_node(mml::next_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_null_node(mml::null_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_function_call_node(mml::function_call_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_function_self_node(mml::function_self_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_identity_node(mml::identity_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_index_node(mml::index_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_address_of_node(mml::address_of_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
+void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
 
   // generate the main function (RTS mandates that its name be "_main")
   _pf.TEXT();
@@ -177,7 +228,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   _pf.LABEL("_main");
   _pf.ENTER(0);  // MML doesn't implement local variables
 
-  node->statements()->accept(this, lvl);
+  node->block()->accept(this, lvl);
 
   // end the main function
   _pf.INT(0);
@@ -209,28 +260,37 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
 
 void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  node->argument()->accept(this, lvl); // determine the value to print
-  if (node->argument()->is_typed(cdk::TYPE_INT)) {
-    _pf.CALL("printi");
-    _pf.TRASH(4); // delete the printed value
-  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
-    _pf.CALL("prints");
-    _pf.TRASH(4); // delete the printed value's address
-  } else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
+  for (auto* argument : node->arguments()->nodes()) {
+    auto* typed = dynamic_cast<cdk::typed_node*>(argument);
+    if (typed == nullptr) {
+      std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+      exit(1);
+    }
+
+    typed->accept(this, lvl); // determine the value to print
+    if (typed->is_typed(cdk::TYPE_INT)) {
+      _pf.CALL("printi");
+      _pf.TRASH(4); // delete the printed value
+    } else if (typed->is_typed(cdk::TYPE_STRING)) {
+      _pf.CALL("prints");
+      _pf.TRASH(4); // delete the printed value's address
+    } else {
+      std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+      exit(1);
+    }
   }
-  _pf.CALL("println"); // print a newline
+
+  if (node->newline()) {
+    _pf.CALL("println");
+  }
 }
 
 //---------------------------------------------------------------------------
 
-void mml::postfix_writer::do_read_node(mml::read_node * const node, int lvl) {
+void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   _pf.CALL("readi");
   _pf.LDFVAL32();
-  node->argument()->accept(this, lvl);
-  _pf.STINT();
 }
 
 //---------------------------------------------------------------------------
