@@ -196,7 +196,7 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
   closeTag(node, lvl);
 }
 
-void mml::xml_writer::do_function_call_node(mml::function_call_node *const node, int lvl) {
+void mml::xml_writer::do_call_node(mml::function_call_node *const node, int lvl) {
   openTag(node, lvl);
   openTag("function", lvl + 2);
   node->function()->accept(this, lvl + 4);
