@@ -81,6 +81,7 @@
 %type <expression> expression_not expression_and expression_or
 %type <lvalue> lvalue
 %type <linteger> opt_linteger
+%type <s> string
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -245,9 +246,13 @@ expression_primary : literal                    { $$ = $1; }
 
 literal : tLINTEGER { $$ = new cdk::integer_node(LINE, $1); }
         | tLDOUBLE  { $$ = new cdk::double_node(LINE, $1); }
-        | tLSTRING  { $$ = new cdk::string_node(LINE, $1); }
+        | string    { $$ = new cdk::string_node(LINE, $1); }
         | tNULL     { $$ = new mml::null_node(LINE); }
         ;
+
+string : tLSTRING        { $$ = $1; }
+       | string tLSTRING { $$ = new std::string(*$1 + *$2); }
+       ;
 
 function : '(' opt_arguments ')' tGIVES type block { $$ = mml::function_node::create(LINE, $2, $6, $5); }
          ;
