@@ -4,6 +4,7 @@
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/sequence_node.h>
 #include <ast/block_node.h>
+#include <ast/variable_declaration_node.h>
 
 namespace mml {
 
@@ -54,6 +55,16 @@ namespace mml {
       return new function_node(lineno, arguments, block, type, true);
     }
 
+    static function_node* create(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> output) {
+      std::vector<std::shared_ptr<cdk::basic_type>> inputs{};
+      for (auto* node : arguments->nodes()) {
+        auto* argument = dynamic_cast<mml::variable_declaration_node*>(node);
+        inputs.push_back(argument->type());
+      }
+
+      auto type = cdk::functional_type::create(inputs, output);
+      return new function_node(lineno, arguments, block, type);
+    }
   };
 
 } // mml

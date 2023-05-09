@@ -71,16 +71,23 @@
 "void"   return tVOID;
 
   /* ====================================================================== */
+  /* FUNCTIONAL                                                             */
+  /* ====================================================================== */
+
+"->" return tGIVES;
+@    return *yytext;
+
+  /* ====================================================================== */
   /* 3.5 - OPERATORS                                                        */
   /* ====================================================================== */
 
-">="         return tGE;
-"<="         return tLE;
-"=="         return tEQ;
-"!="         return tNE;
-"&&"         return tAND;
-"||"         return tOR;
-[~<>=+*/%?] return *yytext;
+">="             return tGE;
+"<="             return tLE;
+"=="             return tEQ;
+"!="             return tNE;
+"&&"             return tAND;
+"||"             return tOR;
+[-+~<>=*/%?\[\]] return *yytext;
 
   /* ====================================================================== */
   /* 3.6 - DELIMITERS AND TERMINATORS                                       */
@@ -118,7 +125,7 @@
 <X_STRING>\"            yy_pop_state(); return tLSTRING;
 <X_STRING>\\            yy_push_state(X_BACKSLASH);
 <X_STRING>.             *yylval.s += yytext;
-<X_STRING>\n            yyerror("newline in string");
+<X_STRING>\n            yyerror("Newline in string");
 
 <X_BACKSLASH>n          yy_pop_state(); *yylval.s += '\n';
 <X_BACKSLASH>r          yy_pop_state(); *yylval.s += '\r';
