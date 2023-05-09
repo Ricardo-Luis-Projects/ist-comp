@@ -1,5 +1,5 @@
-#ifndef __MML_AST_FUNCTION_CALL_NODE_H__
-#define __MML_AST_FUNCTION_CALL_NODE_H__
+#ifndef __MML_AST_CALL_NODE_H__
+#define __MML_AST_CALL_NODE_H__
 
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/sequence_node.h>
