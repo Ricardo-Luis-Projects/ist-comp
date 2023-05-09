@@ -64,7 +64,7 @@
 %nonassoc tELIF
 %nonassoc tELSE
 
-%type <sequence> file global_declarations declarations instructions expressions
+%type <sequence> file global_declarations declarations instructions expressions opt_expressions
 %type <variable_declaration> global_declaration declaration
 %type <i> qualifier
 %type <type> type function_type
@@ -73,7 +73,10 @@
 %type <block> block inner_block
 %type <basic> instruction conditional
 %type <b> print_opt_newline
-%type <expression> opt_initializer initializer expression
+%type <expression> opt_initializer initializer expression call literal
+%type <expression> expression_primary expression_unary expression_mul
+%type <expression> expression_add expression_comp expression_eq
+%type <expression> expression_not expression_and expression_or
 %type <lvalue> lvalue
 %type <linteger> opt_linteger
 
@@ -145,7 +148,7 @@ types : /* empty */ { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); 
       ;
 
 program : tBEGIN inner_block tEND { $$ = mml::function_node::create_main(LINE, $2); }
-	      ;
+	   ;
 
 block : '{' inner_block '}' { $$ = $2; }
 
@@ -157,11 +160,11 @@ instructions : /* empty */              { $$ = new cdk::sequence_node(LINE); }
 	        ;
 
 instruction : block                                 { $$ = $1; }
-            | expression                     ';'    { $$ = new mml::evaluation_node(LINE, $1); }
+            | expression ';'                        { $$ = new mml::evaluation_node(LINE, $1); }
             | expressions print_opt_newline         { $$ = new mml::print_node(LINE, $1, $2); }
-            | tSTOP opt_linteger              ';'   { $$ = new mml::stop_node(LINE, $2); }
-            | tNEXT opt_linteger              ';'   { $$ = new mml::next_node(LINE, $2); }
-            | tRETURN expression             ';'    { $$ = new mml::return_node(LINE, $2); }
+            | tSTOP opt_linteger ';'                { $$ = new mml::stop_node(LINE, $2); }
+            | tNEXT opt_linteger ';'                { $$ = new mml::next_node(LINE, $2); }
+            | tRETURN expression ';'                { $$ = new mml::return_node(LINE, $2); }
             | tWHILE '(' expression ')' instruction { $$ = new mml::while_node(LINE, $3, $5); }
             | tIF conditional                       { $$ = $2; }
             ;
@@ -183,36 +186,76 @@ expressions : expression                 { $$ = new cdk::sequence_node(LINE, $1)
             | expressions ',' expression { $$ = new cdk::sequence_node(LINE, $3, $1); }
             ;
 
-expression : tLINTEGER                   { $$ = new cdk::integer_node(LINE, $1); }
-/*
-           | tLDOUBLE                    { $$ = new cdk::double_node(LINE, $1); }
-           | tLSTRING                    { $$ = new cdk::string_node(LINE, $1); }
-           | tNULL                       { $$ = new cdk::null_node(LINE); }
-           | tINPUT                      { $$ = new mml::input_node(LINE); }
-           | lvalue                      { $$ = new cdk::rvalue_node(LINE, $1); }
-           | '(' expression ')'          { $$ = $2; }
-           | '-' expression              { $$ = new cdk::neg_node(LINE, $2); }
-           | '+' expression              { $$ = new mml::identity_node(LINE, $2); }
-           | expression '?'              { $$ = new mml::address_of_node(LINE, $1); }
-           | expression '*' expression   { $$ = new cdk::mul_node(LINE, $1, $3); }
-           | expression '/' expression   { $$ = new cdk::div_node(LINE, $1, $3); }
-           | expression '%' expression   { $$ = new cdk::mod_node(LINE, $1, $3); }
-           | expression '+' expression   { $$ = new cdk::add_node(LINE, $1, $3); }
-           | expression '-' expression   { $$ = new cdk::sub_node(LINE, $1, $3); }
-           | expression tGE expression   { $$ = new cdk::ge_node(LINE, $1, $3); }
-           | expression tLE expression   { $$ = new cdk::le_node(LINE, $1, $3); }
-           | expression '>' expression   { $$ = new cdk::gt_node(LINE, $1, $3); }
-           | expression '<' expression   { $$ = new cdk::lt_node(LINE, $1, $3); }
-           | expression tEQ expression   { $$ = new cdk::eq_node(LINE, $1, $3); }
-           | expression tNE expression   { $$ = new cdk::ne_node(LINE, $1, $3); }
-           | '~' expression              { $$ = new cdk::not_node(LINE, $2); }
-           | expression tAND expression  { $$ = new cdk::and_node(LINE, $1, $3); }
-           | expression tOR expression   { $$ = new cdk::or_node(LINE, $1, $3); }
-           | expression '=' expression   { $$ = new cdk::assignment_node(LINE, $1, $3); }*/
+expression : lvalue '=' expression { $$ = new cdk::assignment_node(LINE, $1, $3); }
+           | expression_or         { $$ = $1; } /* fallback */
            ;
 
-lvalue : tIDENTIFIER                   { $$ = new cdk::variable_node(LINE, $1); }
-       | expression '[' expression ']' { $$ = new mml::index_node(LINE, $1, $3); }
+expression_or : expression_or tOR expression_and { $$ = new cdk::or_node(LINE, $1, $3); }
+              | expression_and                    { $$ = $1; } /* fallback */
+              ;
+
+expression_and : expression_and tAND expression_not { $$ = new cdk::and_node(LINE, $1, $3); }
+               | expression_not                     { $$ = $1; } /* fallback */
+               ;
+
+expression_not : '~' expression_not { $$ = new cdk::not_node(LINE, $2); }
+               | expression_eq     { $$ = $1; } /* fallback */
+               ;
+
+expression_eq : expression_eq   tEQ expression_comp { $$ = new cdk::eq_node(LINE, $1, $3); }
+              | expression_eq   tNE expression_comp { $$ = new cdk::ne_node(LINE, $1, $3); }
+              | expression_comp                     { $$ = $1; } /* fallback */
+              ;
+
+expression_comp : expression_comp tGE expression_add { $$ = new cdk::ge_node(LINE, $1, $3); }
+                | expression_comp tLE expression_add { $$ = new cdk::le_node(LINE, $1, $3); }
+                | expression_comp '>' expression_add { $$ = new cdk::gt_node(LINE, $1, $3); }
+                | expression_comp '<' expression_add { $$ = new cdk::lt_node(LINE, $1, $3); }
+                | expression_add                    { $$ = $1; } /* fallback */
+                ;
+
+expression_add : expression_add '+' expression_mul { $$ = new cdk::add_node(LINE, $1, $3); }
+               | expression_add '-' expression_mul { $$ = new cdk::sub_node(LINE, $1, $3); }
+               | expression_mul                    { $$ = $1; } /* fallback */
+               ;
+
+expression_mul : expression_mul '*' expression_unary { $$ = new cdk::mul_node(LINE, $1, $3); }
+               | expression_mul '/' expression_unary { $$ = new cdk::div_node(LINE, $1, $3); }
+               | expression_mul '%' expression_unary { $$ = new cdk::mod_node(LINE, $1, $3); }
+               | expression_unary                      { $$ = $1; } /* fallback */
+               ;
+
+expression_unary : '+' expression_unary { $$ = new mml::identity_node(LINE, $2); }
+                 | '-' expression_unary { $$ = new mml::identity_node(LINE, $2); }
+                 | expression_primary   { $$ = $1; } /* fallback */
+                 ;
+
+expression_primary : literal                    { $$ = $1; }
+                   | call                       { $$ = $1; }
+                   | lvalue                     { $$ = new cdk::rvalue_node(LINE, $1); }
+                   | lvalue '?'                 { $$ = new mml::address_of_node(LINE, $1); }
+                   | tINPUT                     { $$ = new mml::input_node(LINE); }
+                   | '[' expression ']'         { $$ = new mml::stack_alloc_node(LINE, $2); }
+                   | '(' expression ')'         { $$ = $2; }
+                   | tSIZEOF '(' expression ')' { $$ = new mml::sizeof_node(LINE, $3); }
+                   ;
+
+lvalue : tIDENTIFIER                           { $$ = new cdk::variable_node(LINE, $1); }
+       | expression_primary '[' expression ']' { $$ = new mml::index_node(LINE, $1, $3); }
        ;
+
+literal : tLINTEGER { $$ = new cdk::integer_node(LINE, $1); }
+        | tLDOUBLE  { $$ = new cdk::double_node(LINE, $1); }
+        | tLSTRING  { $$ = new cdk::string_node(LINE, $1); }
+        | tNULL     { $$ = new mml::null_node(LINE); }
+        ;
+
+call : expression_primary '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $1, $3); }
+     | '@'                '(' opt_expressions ')' { $$ = new mml::recursive_call_node(LINE, $3); }
+     ;
+
+opt_expressions : /* empty */ { $$ = new cdk::sequence_node(LINE); }
+                | expressions { $$ = $1; }
+                ;
 
 %%

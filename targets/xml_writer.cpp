@@ -247,7 +247,7 @@ void mml::xml_writer::do_stack_alloc_node(mml::stack_alloc_node *const node, int
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
-  openTag(node->label() + (node->main() ? " main=true" : " main=false"), lvl);
+  openTag(node->label() + (node->main() ? " main='true'" : " main='false'"), lvl);
   node->arguments()->accept(this, lvl + 4);
   node->block()->accept(this, lvl + 4);
   closeTag(node, lvl);
@@ -264,7 +264,7 @@ void mml::xml_writer::do_evaluation_node(mml::evaluation_node * const node, int 
 
 void mml::xml_writer::do_print_node(mml::print_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  openTag(node->label() + (node->newline() ? " newline=true" : " newline=false"), lvl);
+  openTag(node->label() + (node->newline() ? " newline='true'" : " newline='false'"), lvl);
   node->arguments()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
