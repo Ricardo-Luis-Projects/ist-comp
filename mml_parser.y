@@ -38,7 +38,6 @@
   cdk::sequence_node             *sequence;
   cdk::expression_node           *expression;
   cdk::lvalue_node               *lvalue;
-  cdk::integer_node              *linteger;
 };
 
 %token <i> tFOREIGN tFORWARD tPUBLIC tAUTO
@@ -68,7 +67,7 @@
 %type <sequence> file global_declarations declarations instructions
 %type <sequence> opt_expressions expressions opt_arguments arguments
 %type <variable_declaration> global_declaration declaration argument
-%type <i> qualifier
+%type <i> qualifier opt_integer
 %type <type> type function_type
 %type <types> types
 %type <function> program function
@@ -80,7 +79,6 @@
 %type <expression> expression_add expression_comp expression_eq
 %type <expression> expression_not expression_and expression_or
 %type <lvalue> lvalue
-%type <linteger> opt_linteger
 %type <s> string
 
 %{
@@ -165,8 +163,8 @@ instructions : /* empty */              { $$ = new cdk::sequence_node(LINE); }
 instruction : block                                 { $$ = $1; }
             | expression ';'                        { $$ = new mml::evaluation_node(LINE, $1); }
             | expressions print_opt_newline         { $$ = new mml::print_node(LINE, $1, $2); }
-            | tSTOP opt_linteger ';'                { $$ = new mml::stop_node(LINE, $2); }
-            | tNEXT opt_linteger ';'                { $$ = new mml::next_node(LINE, $2); }
+            | tSTOP opt_integer ';'                 { $$ = new mml::stop_node(LINE, $2); }
+            | tNEXT opt_integer ';'                 { $$ = new mml::next_node(LINE, $2); }
             | tRETURN expression ';'                { $$ = new mml::return_node(LINE, $2); }
             | tWHILE '(' expression ')' instruction { $$ = new mml::while_node(LINE, $3, $5); }
             | tIF conditional                       { $$ = $2; }
@@ -176,9 +174,9 @@ print_opt_newline : '!'      { $$ = false; }
                   | tPRINTLN { $$ = true; }
                   ;
 
-opt_linteger : /* empty */ { $$ = new cdk::integer_node(LINE, 0); }
-             | tLINTEGER   { $$ = new cdk::integer_node(LINE, $1); }
-             ;
+opt_integer : /* empty */ { $$ = 1; }
+            | tLINTEGER   { $$ = $1; }
+            ;
 
 conditional : '(' expression ')' instruction %prec tIFX        { $$ = new mml::if_node(LINE, $2, $4); }
             | '(' expression ')' instruction tELIF conditional { $$ = new mml::if_else_node(LINE, $2, $4, $6); }

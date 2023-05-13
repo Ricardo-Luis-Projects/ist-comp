@@ -15,7 +15,7 @@ namespace mml {
         mml::loop_flow_control_node(lineno) {
     }
 
-    inline stop_node(int lineno, cdk::integer_node *nesting) :
+    inline stop_node(int lineno, int nesting) :
         mml::loop_flow_control_node(lineno, nesting) {
     }
 

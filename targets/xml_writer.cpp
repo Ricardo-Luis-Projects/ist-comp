@@ -155,14 +155,12 @@ void mml::xml_writer::do_return_node(mml::return_node *const node, int lvl) {
 }
 
 void mml::xml_writer::do_stop_node(mml::stop_node *const node, int lvl) {
-  openTag(node, lvl);
-  node->nesting()->accept(this, lvl + 2);
+  os() << std::string(lvl, ' ') << "<" << node->label() << " nesting='" << node->nesting() << "'>" << std::endl;
   closeTag(node, lvl);
 }
 
 void mml::xml_writer::do_next_node(mml::next_node *const node, int lvl) {
-  openTag(node, lvl);
-  node->nesting()->accept(this, lvl + 2);
+  os() << std::string(lvl, ' ') << "<" << node->label() << " nesting='" << node->nesting() << "'>" << std::endl;
   closeTag(node, lvl);
 }
 
