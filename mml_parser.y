@@ -34,6 +34,7 @@
   mml::variable_declaration_node *variable_declaration;
   mml::function_node             *function;
   mml::block_node                *block;
+  mml::call_node                 *call;
   cdk::basic_node                *basic;
   cdk::sequence_node             *sequence;
   cdk::expression_node           *expression;
@@ -74,10 +75,11 @@
 %type <block> block inner_block
 %type <basic> instruction conditional
 %type <b> print_opt_newline
-%type <expression> opt_initializer initializer expression call literal
+%type <expression> opt_initializer initializer expression literal
 %type <expression> expression_primary expression_unary expression_mul
 %type <expression> expression_add expression_comp expression_eq
 %type <expression> expression_not expression_and expression_or
+%type <call> call
 %type <lvalue> lvalue
 %type <s> string
 
@@ -267,7 +269,7 @@ argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, 0, *
          ;
 
 call : expression_primary '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $1, $3); }
-     | '@'                '(' opt_expressions ')' { $$ = new mml::recursive_call_node(LINE, $3); }
+     | '@'                '(' opt_expressions ')' { $$ = new mml::call_node(LINE, nullptr, $3); }
      ;
 
 lvalue : tIDENTIFIER                           { $$ = new cdk::variable_node(LINE, $1); }

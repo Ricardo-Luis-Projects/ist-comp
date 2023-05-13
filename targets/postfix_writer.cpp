@@ -197,10 +197,6 @@ void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
   // EMPTY
 }
 
-void mml::postfix_writer::do_recursive_call_node(mml::recursive_call_node *const node, int lvl) {
-  // EMPTY
-}
-
 void mml::postfix_writer::do_identity_node(mml::identity_node *const node, int lvl) {
   // EMPTY
 }

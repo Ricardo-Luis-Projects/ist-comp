@@ -7,7 +7,7 @@
 namespace mml {
 
   /**
-   * Class for describing function call nodes.
+   * Class for describing function call nodes. Recurses if function is null.
    */
   class call_node : public cdk::expression_node {
     cdk::expression_node *_function;

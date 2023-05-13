@@ -194,13 +194,9 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
 
 void mml::xml_writer::do_call_node(mml::call_node *const node, int lvl) {
   openTag(node, lvl);
-  node->function()->accept(this, lvl + 2);
-  node->arguments()->accept(this, lvl + 2);
-  closeTag(node, lvl);
-}
-
-void mml::xml_writer::do_recursive_call_node(mml::recursive_call_node *const node, int lvl) {
-  openTag(node, lvl);
+  if (node->function() != nullptr) {
+    node->function()->accept(this, lvl + 2);
+  }
   node->arguments()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
