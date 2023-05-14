@@ -67,7 +67,7 @@
 %type <sequence> file global_declarations declarations instructions
 %type <sequence> opt_expressions expressions opt_arguments arguments
 %type <variable_declaration> global_declaration declaration argument
-%type <i> qualifier opt_integer
+%type <i> qualifier opt_nesting
 %type <type> type function_type
 %type <types> types
 %type <function> program function
@@ -163,8 +163,8 @@ instructions : /* empty */              { $$ = new cdk::sequence_node(LINE); }
 instruction : block                                 { $$ = $1; }
             | expression ';'                        { $$ = new mml::evaluation_node(LINE, $1); }
             | expressions print_opt_newline         { $$ = new mml::print_node(LINE, $1, $2); }
-            | tSTOP opt_integer ';'                 { $$ = new mml::stop_node(LINE, $2); }
-            | tNEXT opt_integer ';'                 { $$ = new mml::next_node(LINE, $2); }
+            | tSTOP opt_nesting ';'                 { $$ = new mml::stop_node(LINE, $2); }
+            | tNEXT opt_nesting ';'                 { $$ = new mml::next_node(LINE, $2); }
             | tRETURN expression ';'                { $$ = new mml::return_node(LINE, $2); }
             | tWHILE '(' expression ')' instruction { $$ = new mml::while_node(LINE, $3, $5); }
             | tIF conditional                       { $$ = $2; }
@@ -174,7 +174,7 @@ print_opt_newline : '!'      { $$ = false; }
                   | tPRINTLN { $$ = true; }
                   ;
 
-opt_integer : /* empty */ { $$ = 1; }
+opt_nesting : /* empty */ { $$ = 1; }
             | tLINTEGER   { $$ = $1; }
             ;
 

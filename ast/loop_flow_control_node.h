@@ -12,10 +12,6 @@ namespace mml {
     int _nesting;
 
   protected:
-    inline loop_flow_control_node(int lineno) :
-        cdk::basic_node(lineno), _nesting(1) {
-    }
-
     inline loop_flow_control_node(int lineno, int nesting) :
         cdk::basic_node(lineno), _nesting(nesting) {
     }
