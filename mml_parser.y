@@ -94,8 +94,8 @@ global_declarations : /* empty */                                { $$ = new cdk:
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
-global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4, nullptr); }
-                   | qualifier type     tIDENTIFIER             { $$ = new mml::variable_declaration_node(LINE, $1, *$3, nullptr, $2); }
+global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); }
+                   | qualifier type     tIDENTIFIER             { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $2); }
                    | declaration                                { $$ = $1; }
                    ;
 
@@ -103,8 +103,8 @@ declarations : /* empty */                  { $$ = new cdk::sequence_node(LINE);
              | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, 0, *$2, $3, nullptr); }
-            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, 0, *$2, $3, $1); }
+declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, *$2, $3); }
+            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, *$2, $3, $1); }
             ;
 
 qualifier : tPUBLIC  { $$ = tPUBLIC; }
@@ -267,7 +267,7 @@ arguments : argument               { $$ = new cdk::sequence_node(LINE, $1); }
           | arguments ',' argument { $$ = new cdk::sequence_node(LINE, $3, $1); }
           ;
 
-argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, 0, *$2, nullptr, $1); }
+argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, *$2, $1); }
          ;
 
 call : expression_primary '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3, $1); }
