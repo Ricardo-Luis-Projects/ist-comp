@@ -1,17 +1,17 @@
 #ifndef __MML_AST_NULL_NODE_H__
 #define __MML_AST_NULL_NODE_H__
 
-#include <cdk/ast/literal_node.h>
+#include <cdk/ast/expression_node.h>
 
 namespace mml {
 
   /**
    * Class for describing null nodes. 
    */
-  class null_node: public virtual cdk::literal_node<std::nullptr_t> {
+  class null_node: public virtual cdk::expression_node {
   public:
     inline null_node(int lineno) :
-        cdk::literal_node<std::nullptr_t>(lineno, nullptr) {
+        expression_node(lineno) {
     }
 
   public:
