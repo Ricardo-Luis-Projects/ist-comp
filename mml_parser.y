@@ -74,7 +74,7 @@
 %type <block> block inner_block
 %type <basic> instruction conditional
 %type <b> print_opt_newline
-%type <expression> opt_initializer initializer expression call literal
+%type <expression> opt_initializer initializer expression call literal opt_expression
 %type <expression> expression_primary expression_unary expression_mul
 %type <expression> expression_add expression_comp expression_eq
 %type <expression> expression_not expression_and expression_or
@@ -165,7 +165,7 @@ instruction : block                                 { $$ = $1; }
             | expressions print_opt_newline         { $$ = new mml::print_node(LINE, $1, $2); }
             | tSTOP opt_nesting ';'                 { $$ = new mml::stop_node(LINE, $2); }
             | tNEXT opt_nesting ';'                 { $$ = new mml::next_node(LINE, $2); }
-            | tRETURN expression ';'                { $$ = new mml::return_node(LINE, $2); }
+            | tRETURN opt_expression ';'            { $$ = new mml::return_node(LINE, $2); }
             | tWHILE '(' expression ')' instruction { $$ = new mml::while_node(LINE, $3, $5); }
             | tIF conditional                       { $$ = $2; }
             ;
@@ -177,6 +177,10 @@ print_opt_newline : '!'      { $$ = false; }
 opt_nesting : /* empty */ { $$ = 1; }
             | tLINTEGER   { $$ = $1; }
             ;
+
+opt_expression : /* empty */ { $$ = nullptr; }
+               | expression  { $$ = $1; }
+               ;
 
 conditional : '(' expression ')' instruction %prec tIFX        { $$ = new mml::if_node(LINE, $2, $4); }
             | '(' expression ')' instruction tELIF conditional { $$ = new mml::if_else_node(LINE, $2, $4, $6); }
