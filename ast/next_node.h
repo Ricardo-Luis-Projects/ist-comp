@@ -11,10 +11,6 @@ namespace mml {
   class next_node : public mml::loop_flow_control_node {
 
   public:
-    inline next_node(int lineno) :
-        mml::loop_flow_control_node(lineno) {
-    }
-
     inline next_node(int lineno, int nesting) :
         mml::loop_flow_control_node(lineno, nesting) {
     }
