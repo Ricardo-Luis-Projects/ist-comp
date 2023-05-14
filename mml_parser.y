@@ -148,7 +148,7 @@ types : /* empty */ { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); 
       | types type  { $$ = $1; $1->push_back($2); }
       ;
 
-program : tBEGIN inner_block tEND { $$ = mml::function_node::create_main(LINE, $2); }
+program : tBEGIN inner_block tEND { $$ = new mml::function_node(LINE, $2); }
 	   ;
 
 block : '{' inner_block '}' { $$ = $2; }
@@ -252,7 +252,7 @@ string : tLSTRING        { $$ = $1; }
        | string tLSTRING { $$ = new std::string(*$1 + *$2); }
        ;
 
-function : '(' opt_arguments ')' tGIVES type block { $$ = mml::function_node::create(LINE, $2, $6, $5); }
+function : '(' opt_arguments ')' tGIVES type block { $$ = new mml::function_node(LINE, $2, $6, $5); }
          ;
 
 opt_arguments : /* empty */ { $$ = new cdk::sequence_node(LINE); }
