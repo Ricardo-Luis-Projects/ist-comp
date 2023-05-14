@@ -266,8 +266,8 @@ arguments : argument               { $$ = new cdk::sequence_node(LINE, $1); }
 argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, 0, *$2, nullptr, $1); }
          ;
 
-call : expression_primary '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $1, $3); }
-     | '@'                '(' opt_expressions ')' { $$ = new mml::call_node(LINE, nullptr, $3); }
+call : expression_primary '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3, $1); }
+     | '@'                '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3); }
      ;
 
 lvalue : tIDENTIFIER                           { $$ = new cdk::variable_node(LINE, $1); }
