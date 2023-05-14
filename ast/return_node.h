@@ -7,7 +7,7 @@
 namespace mml {
 
   /**
-   * Class for describing return nodes.
+   * Class for describing return nodes. The return expression is optional.
    */
   class return_node : public cdk::basic_node {
     cdk::expression_node *_retval;

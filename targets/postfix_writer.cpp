@@ -193,11 +193,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
   // EMPTY
 }
 
-void mml::postfix_writer::do_function_call_node(mml::function_call_node *const node, int lvl) {
-  // EMPTY
-}
-
-void mml::postfix_writer::do_function_self_node(mml::function_self_node *const node, int lvl) {
+void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
   // EMPTY
 }
 

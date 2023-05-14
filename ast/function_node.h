@@ -3,7 +3,9 @@
 
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/sequence_node.h>
+#include <cdk/types/functional_type.h>
 #include <ast/block_node.h>
+#include <ast/variable_declaration_node.h>
 
 namespace mml {
 
@@ -16,16 +18,25 @@ namespace mml {
     bool _main;
 
   public:
-    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> funtype) :
-        function_node(lineno, arguments, block, funtype, false) {
+    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> output) :
+        cdk::expression_node(lineno), _arguments(arguments), _block(block), _main(false) {
+      // Extract the input types from the arguments sequence.
+      std::vector<std::shared_ptr<cdk::basic_type>> inputs{};
+      for (auto* node : arguments->nodes()) {
+        auto* argument = dynamic_cast<mml::variable_declaration_node*>(node);
+        inputs.push_back(argument->type());
+      }
+
+      type(cdk::functional_type::create(inputs, output));
     }
 
-  protected:
-    inline function_node(int lineno, cdk::sequence_node *arguments, mml::block_node *block, std::shared_ptr<cdk::basic_type> funtype, bool main) :
-        cdk::expression_node(lineno), _arguments(arguments), _block(block), _main(main) {
-      type(funtype);
+    /**
+     * Special constructor for the main function.
+     */
+    inline function_node(int lineno, mml::block_node *block) :
+        cdk::expression_node(lineno), _arguments(new cdk::sequence_node(lineno)), _block(block), _main(true) {
+      type(cdk::functional_type::create(cdk::primitive_type::create(4, cdk::TYPE_INT)));
     }
-    
 
   public:
     inline cdk::sequence_node *arguments() {
@@ -40,20 +51,17 @@ namespace mml {
       return _main;
     }
 
+    inline std::shared_ptr<cdk::structured_type> input_types() {
+      return std::dynamic_pointer_cast<cdk::functional_type>(type())->input();
+    }
+
+    inline std::shared_ptr<cdk::basic_type> output_type() {
+      return std::dynamic_pointer_cast<cdk::functional_type>(type())->output(0);
+    }
+
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_function_node(this, level);
     }
-
-  public:
-     /**
-     * Creates a new function node to represent the main function. 
-     */
-    static function_node* create_main(int lineno, mml::block_node *block) {
-      auto arguments = new cdk::sequence_node(lineno);
-      auto type = cdk::functional_type::create(cdk::primitive_type::create(4, cdk::TYPE_INT));
-      return new function_node(lineno, arguments, block, type, true);
-    }
-
   };
 
 } // mml
