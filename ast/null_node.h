@@ -1,5 +1,5 @@
-#ifndef __MML_AST_NULLPTR_H__
-#define __MML_AST_NULLPTR_H__
+#ifndef __MML_AST_NULL_NODE_H__
+#define __MML_AST_NULL_NODE_H__
 
 #include <cdk/ast/literal_node.h>
 
