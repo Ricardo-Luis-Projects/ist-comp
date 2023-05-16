@@ -80,7 +80,7 @@
 %type <variable_declaration> global_declaration declaration argument
 %type <i> qualifier opt_nesting
 %type <type> type function_type
-%type <types> types
+%type <types> argument_types
 %type <function> program function
 %type <block> block inner_block
 %type <basic> instruction conditional
@@ -151,12 +151,12 @@ type : tINT          { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
      }
      ;
 
-function_type : type '<' types '>' { $$ = cdk::functional_type::create(*$3, $1); }
+function_type : type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); }
               ;
 
-types : /* empty */ { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); }
-      | types type  { $$ = $1; $1->push_back($2); }
-      ;
+argument_types : /* empty */         { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); }
+               | argument_types type { $$ = $1; $1->push_back($2); }
+               ;
 
 program : tBEGIN inner_block tEND { $$ = new mml::function_node(LINE, $2); }
 	   ;
