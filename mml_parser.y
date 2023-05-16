@@ -99,7 +99,7 @@ global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer { $$ = new mml::
                    | declaration                                { $$ = $1; }
                    ;
 
-declarations : /* empty */                  { $$ = new cdk::sequence_node(LINE); }
+declarations : declaration                  { $$ = new cdk::sequence_node(LINE, $1); }
              | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
@@ -153,10 +153,13 @@ program : tBEGIN inner_block tEND { $$ = new mml::function_node(LINE, $2); }
 
 block : '{' inner_block '}' { $$ = $2; }
 
-inner_block : declarations instructions { $$ = new mml::block_node(LINE, $1, $2); }
+inner_block : /* empty */               { $$ = new mml::block_node(LINE, nullptr, nullptr); }
+            | declarations              { $$ = new mml::block_node(LINE, $1, nullptr); }
+            | declarations instructions { $$ = new mml::block_node(LINE, $1, $2); }
+            |              instructions { $$ = new mml::block_node(LINE, nullptr, $1); }
             ;
 
-instructions : /* empty */              { $$ = new cdk::sequence_node(LINE); }
+instructions : instruction              { $$ = new cdk::sequence_node(LINE, $1); }
 	        | instructions instruction { $$ = new cdk::sequence_node(LINE, $2, $1); }
 	        ;
 
