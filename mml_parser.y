@@ -94,11 +94,13 @@
 %}
 %%
 
-file : global_declarations         { compiler->ast($$ = $1); }
+file : /* empty */                 { compiler->ast($$ = new cdk::sequence_node(LINE)); }
+     | global_declarations         { compiler->ast($$ = $1); }
      | global_declarations program { compiler->ast($$ = new cdk::sequence_node(LINE, $2, $1)); }
+     |                     program { compiler->ast($$ = new cdk::sequence_node(LINE, $1)); }
      ;
 
-global_declarations : /* empty */                                { $$ = new cdk::sequence_node(LINE); }
+global_declarations :                     global_declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
