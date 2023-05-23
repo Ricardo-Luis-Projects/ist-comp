@@ -30,13 +30,6 @@ namespace mml {
     }
 
     /**
-     * Constructor for variable declaration nodes with a qualifier but no initializer.
-     */
-    inline variable_declaration_node(int lineno, int qualifier, const std::string& name, std::shared_ptr<cdk::basic_type> vartype) :
-        variable_declaration_node(lineno, qualifier, name, nullptr, vartype) {
-    }
-
-    /**
      * Constructor for variable declaration nodes with an initializer and qualifier.
      */
     inline variable_declaration_node(int lineno, int qualifier, const std::string& name, cdk::expression_node* initializer, std::shared_ptr<cdk::basic_type> vartype = nullptr) :

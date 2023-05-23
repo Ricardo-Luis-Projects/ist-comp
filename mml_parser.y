@@ -104,9 +104,9 @@ global_declarations :                     global_declaration ';' { $$ = new cdk:
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
-global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); }
-                   | qualifier type     tIDENTIFIER             { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $2); }
-                   | declaration                                { $$ = $1; }
+global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); }
+                   | qualifier type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $4, $2); }
+                   | declaration                                    { $$ = $1; }
                    ;
 
 declarations :              declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
@@ -151,11 +151,12 @@ type : tINT          { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
      }
      ;
 
-function_type : type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); }
+function_type : type '<' '>'                { $$ = cdk::functional_type::create($1); }
+              | type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); }
               ;
 
-argument_types : /* empty */         { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); }
-               | argument_types type { $$ = $1; $1->push_back($2); }
+argument_types :                    type { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>({$1}); }
+               | argument_types ',' type { $$ = $1; $1->push_back($3); }
                ;
 
 program : tBEGIN inner_block tEND { $$ = new mml::function_node(LINE, $2); }
@@ -214,7 +215,7 @@ expression : literal                     { $$ = $1; }
            | '(' expression ')'          { $$ = $2; }
            | '~' expression              { $$ = new cdk::not_node(LINE, $2); }
            | '+' expression %prec tUNARY { $$ = new mml::identity_node(LINE, $2); }
-           | '-' expression %prec tUNARY { $$ = new mml::identity_node(LINE, $2); }
+           | '-' expression %prec tUNARY { $$ = new cdk::neg_node(LINE, $2); }
            | tSIZEOF '(' expression ')'  { $$ = new mml::sizeof_node(LINE, $3); }
            | expression tAND expression  { $$ = new cdk::and_node(LINE, $1, $3); }
            | expression tOR  expression  { $$ = new cdk::or_node(LINE, $1, $3); }
