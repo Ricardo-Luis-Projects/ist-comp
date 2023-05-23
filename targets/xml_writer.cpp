@@ -229,7 +229,8 @@ void mml::xml_writer::do_stack_alloc_node(mml::stack_alloc_node *const node, int
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
-  openTag(node->label() + (node->main() ? " main='true'" : " main='false'"), lvl);
+  os() << std::string(lvl, ' ') << "<" << node->label() << " main='";
+  os() << (node->main() ? "true" : "false") << "' return_type='" << cdk::to_string(node->output_type()) << "'>" << std::endl;
   node->arguments()->accept(this, lvl + 2);
   node->block()->accept(this, lvl + 2);
   closeTag(node, lvl);
