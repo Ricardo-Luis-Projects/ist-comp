@@ -127,7 +127,7 @@
 <X_BACKSLASH>n          yy_pop_state(); *yylval.s += '\n';
 <X_BACKSLASH>r          yy_pop_state(); *yylval.s += '\r';
 <X_BACKSLASH>t          yy_pop_state(); *yylval.s += '\t';
-<X_BACKSLASH>[0-7]{1,3} *yylval.s += strtoul(yytext, NULL, 8);
+<X_BACKSLASH>[0-7]{1,3} yy_pop_state(); *yylval.s += strtoul(yytext, NULL, 8);
 <X_BACKSLASH>.          yy_pop_state(); *yylval.s += yytext;
 
   /* ====================================================================== */
