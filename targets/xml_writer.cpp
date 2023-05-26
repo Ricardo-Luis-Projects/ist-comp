@@ -143,8 +143,15 @@ void mml::xml_writer::do_assignment_node(cdk::assignment_node * const node, int 
 
 void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
   openTag(node, lvl);
-  node->declarations()->accept(this, lvl + 2);
-  node->instructions()->accept(this, lvl + 2);
+
+  openTag("declarations", lvl + 2);
+  node->declarations()->accept(this, lvl + 4);
+  closeTag("declarations", lvl + 2);
+
+  openTag("instructions", lvl + 2);
+  node->instructions()->accept(this, lvl + 4);
+  closeTag("instructions", lvl + 2);
+
   closeTag(node, lvl);
 }
 
@@ -186,7 +193,9 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
   os() << ">" << std::endl;
 
   if (node->initializer()) {
-    node->initializer()->accept(this, lvl + 2);
+    openTag("initializer", lvl + 2);
+    node->initializer()->accept(this, lvl + 4);
+    closeTag("initializer", lvl + 2);
   }
 
   closeTag(node, lvl);
@@ -194,10 +203,17 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
 
 void mml::xml_writer::do_call_node(mml::call_node *const node, int lvl) {
   openTag(node, lvl);
+
   if (node->function() != nullptr) {
-    node->function()->accept(this, lvl + 2);
+    openTag("function", lvl + 2);
+    node->function()->accept(this, lvl + 4);
+    closeTag("function", lvl + 2);
   }
-  node->arguments()->accept(this, lvl + 2);
+
+  openTag("arguments", lvl + 2);
+  node->arguments()->accept(this, lvl + 4);
+  closeTag("arguments", lvl + 2);
+
   closeTag(node, lvl);
 }
 
@@ -231,8 +247,13 @@ void mml::xml_writer::do_stack_alloc_node(mml::stack_alloc_node *const node, int
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
   os() << std::string(lvl, ' ') << "<" << node->label() << " main='";
   os() << (node->main() ? "true" : "false") << "' return_type='" << cdk::to_string(node->output_type()) << "'>" << std::endl;
-  node->arguments()->accept(this, lvl + 2);
+
+  openTag("arguments", lvl + 2);
+  node->arguments()->accept(this, lvl + 4);
+  closeTag("arguments", lvl + 2);
+
   node->block()->accept(this, lvl + 2);
+
   closeTag(node, lvl);
 }
 
