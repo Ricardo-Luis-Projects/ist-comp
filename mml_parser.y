@@ -87,7 +87,7 @@
 %type <b> print_opt_newline
 %type <expression> opt_initializer initializer call literal opt_expression expression
 %type <lvalue> lvalue
-%type <s> string concatenation
+%type <s> string
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -239,12 +239,9 @@ literal : tLINTEGER { $$ = new cdk::integer_node(LINE, $1); }
         | tNULL     { $$ = new mml::null_node(LINE); }
         ;
 
-string : concatenation { $$ = new std::string($1->c_str()); /* Trims everything after the first \0 */ }
+string : tLSTRING        { $$ = $1; }
+       | tLSTRING string { $$ = new std::string(*$1 + *$2); }
        ;
-
-concatenation : tLSTRING               { $$ = $1; }
-              | tLSTRING concatenation { $$ = new std::string(*$1 + *$2); }
-              ;
 
 function : '(' opt_arguments ')' tGIVES type block { $$ = new mml::function_node(LINE, $2, $6, $5); }
          ;

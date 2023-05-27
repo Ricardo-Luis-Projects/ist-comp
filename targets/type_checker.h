@@ -3,6 +3,8 @@
 
 #include "targets/basic_ast_visitor.h"
 
+#include <cdk/types/functional_type.h>
+
 namespace mml {
 
   /**

@@ -119,7 +119,7 @@
   /* ====================================================================== */
 
 \"                      yy_push_state(X_STRING); yylval.s = new std::string("");
-<X_STRING>\"            yy_pop_state(); return tLSTRING;
+<X_STRING>\"            yy_pop_state(); *yylval.s = yylval.s->substr(0, yylval.s->find_first_of('\0')); return tLSTRING;
 <X_STRING>\\            yy_push_state(X_BACKSLASH);
 <X_STRING>.             *yylval.s += yytext;
 <X_STRING>\n            yyerror("Newline in string");
