@@ -3,6 +3,8 @@
 
 #include "targets/basic_ast_visitor.h"
 
+#include <cdk/types/functional_type.h>
+
 namespace mml {
 
   /**
@@ -13,9 +15,11 @@ namespace mml {
 
     basic_ast_visitor *_parent;
 
+    std::shared_ptr<cdk::functional_type> _currentFunctionType;
+
   public:
     type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, basic_ast_visitor *parent) :
-        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent) {
+        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent), _currentFunctionType(nullptr) {
     }
 
   public:
@@ -29,6 +33,9 @@ namespace mml {
     template<typename T>
     void process_literal(cdk::literal_node<T> *const node, int lvl) {
     }
+
+    /** Asserts that a type can be casted to another type. */
+    void assert_cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to);
 
   public:
     // do not edit these lines
