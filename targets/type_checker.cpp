@@ -47,26 +47,16 @@ void mml::type_checker::assert_cast(std::shared_ptr<cdk::basic_type> from, std::
 
 //---------------------------------------------------------------------------
 
-void mml::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
-  // EMPTY
-}
-
-//---------------------------------------------------------------------------
-
 void mml::type_checker::do_nil_node(cdk::nil_node *const node, int lvl) {
   // EMPTY
 }
 void mml::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
   // EMPTY
 }
-void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
-  // EMPTY
-}
 
-void mml::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
-  // EMPTY
-}
-void mml::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
+//---------------------------------------------------------------------------
+
+void mml::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
   // EMPTY
 }
 
@@ -77,9 +67,18 @@ void mml::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) 
   node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
 }
 
+void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
+  // EMPTY
+}
+
 void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
   ASSERT_UNSPEC;
   node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+}
+
+void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
+  // TODO: should we use TYPE_UNSPEC instead?
+  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
 }
 
 //---------------------------------------------------------------------------
@@ -108,6 +107,17 @@ void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl
   if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
     throw std::string("wrong type in argument of identity expression");
   }
+}
+
+void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+}
+
+void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+  // TODO: expect argument type to be int
+  // TODO: should we use TYPE_UNSPEC instead?
+  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
 }
 
 //---------------------------------------------------------------------------
@@ -156,6 +166,12 @@ void mml::type_checker::do_ne_node(cdk::ne_node *const node, int lvl) {
 }
 void mml::type_checker::do_eq_node(cdk::eq_node *const node, int lvl) {
   processBinaryExpression(node, lvl);
+}
+void mml::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
+  // EMPTY
+}
+void mml::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
+  // EMPTY
 }
 
 //---------------------------------------------------------------------------
@@ -215,27 +231,6 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
   _symtab.pop();
 }
 
-void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
-  // TODO: make sure that the return type is compatible with the current function's return type
-}
-
-void mml::type_checker::do_stop_node(mml::stop_node *const node, int lvl) {
-  // EMPTY
-}
-
-void mml::type_checker::do_next_node(mml::next_node *const node, int lvl) {
-  // EMPTY
-}
-
-void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
-  // TODO: should we use TYPE_UNSPEC instead?
-  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
-}
-
-void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
-}
-
 void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
   if (node->initializer()) {
     node->initializer()->accept(this, lvl + 2);
@@ -250,12 +245,6 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   _symtab.insert(node->name(), symbol);
 }
 
-void mml::type_checker::do_call_node(mml::call_node *const node, int lvl) {
-  // TODO: if function() is null, find type of the current function
-  // TODO: check argument types.
-  // TODO: set type to function return type.
-}
-
 void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
   // TODO: expect base type to be a pointer.
   // TODO: expect index type to be int.
@@ -265,11 +254,17 @@ void mml::type_checker::do_address_of_node(mml::address_of_node *const node, int
   // TODO: find variable and set type to pointer to variable type.
 }
 
-void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
+void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
-  // TODO: expect argument type to be int
-  // TODO: should we use TYPE_UNSPEC instead?
-  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
+}
+
+void mml::type_checker::do_print_node(mml::print_node *const node, int lvl) {
+  node->arguments()->accept(this, lvl + 2);
+  // TODO: make sure the arguments are int, real or string
+}
+
+void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
+  // EMPTY
 }
 
 //---------------------------------------------------------------------------
@@ -282,19 +277,14 @@ void mml::type_checker::do_function_node(mml::function_node *const node, int lvl
   _symtab.pop();
 }
 
-void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int lvl) {
-  node->argument()->accept(this, lvl + 2);
+void mml::type_checker::do_call_node(mml::call_node *const node, int lvl) {
+  // TODO: if function() is null, find type of the current function
+  // TODO: check argument types.
+  // TODO: set type to function return type.
 }
 
-void mml::type_checker::do_print_node(mml::print_node *const node, int lvl) {
-  node->arguments()->accept(this, lvl + 2);
-  // TODO: make sure the arguments are int, real or string
-}
-
-//---------------------------------------------------------------------------
-
-void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
-  // EMPTY
+void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
+  // TODO: make sure that the return type is compatible with the current function's return type
 }
 
 //---------------------------------------------------------------------------
@@ -302,6 +292,14 @@ void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
 void mml::type_checker::do_while_node(mml::while_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
   // TODO: expect condition type to be int
+}
+
+void mml::type_checker::do_stop_node(mml::stop_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_next_node(mml::next_node *const node, int lvl) {
+  // EMPTY
 }
 
 //---------------------------------------------------------------------------
