@@ -68,7 +68,8 @@ void mml::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) 
 }
 
 void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
 }
 
 void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
@@ -77,7 +78,7 @@ void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
-  // TODO: should we use TYPE_UNSPEC instead?
+  ASSERT_UNSPEC;
   node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
 }
 
@@ -89,35 +90,42 @@ void mml::type_checker::processUnaryExpression(cdk::unary_operation_node *const 
 }
 
 void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
+  ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
   if (!node->argument()->is_typed(cdk::TYPE_INT)) {
-    throw std::string("wrong type in argument of not operator");
+    throw std::string("expected int in argument of not operator, found " + cdk::to_string(node->argument()->type()));
   }
 }
 
 void mml::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
+  ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
+
   if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("wrong type in argument of negate expression");
+    throw std::string("expected int or double in argument of neg operator, found " + cdk::to_string(node->argument()->type()));
   }
 }
 
 void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl) {
+  ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
   if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("wrong type in argument of identity expression");
+    throw std::string("expected int or double in argument of identity operator, found " + cdk::to_string(node->argument()->type()));
   }
 }
 
 void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
+  ASSERT_UNSPEC;
   node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
 }
 
 void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
-  // TODO: expect argument type to be int
-  // TODO: should we use TYPE_UNSPEC instead?
-  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
+  if (!node->argument()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("expected int in argument of stack allocation operator, found " + cdk::to_string(node->argument()->type()));
+  }
+
+  // Type is left unspecified because it is
 }
 
 //---------------------------------------------------------------------------
