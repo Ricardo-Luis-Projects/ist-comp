@@ -176,7 +176,7 @@ void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_nod
     os() << " qualifier='" << qualifier_name(node->qualifier()) << '\'';
   }
   if (node->type() != nullptr) {
-    os() << " type='" << cdk::to_string(node->type()) << '\'';
+    os() << " type='" << mml::to_string(node->type()) << '\'';
   }
   os() << ">" << std::endl;
 
@@ -226,7 +226,7 @@ void mml::xml_writer::do_input_node(mml::input_node * const node, int lvl) {
 
 void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl) {
   os() << std::string(lvl, ' ') << "<" << node->label() << " main='";
-  os() << (node->main() ? "true" : "false") << "' return_type='" << cdk::to_string(node->output_type()) << "'>" << std::endl;
+  os() << (node->main() ? "true" : "false") << "' return_type='" << mml::to_string(node->output_type()) << "'>" << std::endl;
 
   openTag("arguments", lvl + 2);
   node->arguments()->accept(this, lvl + 4);

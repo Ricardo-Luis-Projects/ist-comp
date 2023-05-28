@@ -5,12 +5,41 @@
 
 #define ASSERT_UNSPEC { if (node->type() != nullptr && !node->is_typed(cdk::TYPE_UNSPEC)) return; }
 
+std::string mml::to_string(std::shared_ptr<cdk::basic_type> type)
+{
+  if (type->name() == cdk::TYPE_VOID)
+    return "void";
+  else if (type->name() == cdk::TYPE_INT)
+    return "int";
+  else if (type->name() == cdk::TYPE_DOUBLE)
+    return "double";
+  else if (type->name() == cdk::TYPE_STRING)
+    return "string";
+  else if (type->name() == cdk::TYPE_POINTER) {
+    auto ptr = std::dynamic_pointer_cast<cdk::reference_type>(type);
+    return '[' + mml::to_string(ptr->referenced()) + ']';
+  }
+  else if (type->name() == cdk::TYPE_FUNCTIONAL) {
+    auto ptr = std::dynamic_pointer_cast<cdk::functional_type>(type);
+    std::string ret = "(";
+    for (size_t i = 0; i < ptr->input_length(); i++) {
+      ret += mml::to_string(ptr->input(i));
+      if (i != ptr->input_length() - 1)
+        ret += ", ";
+    }
+    ret += ") -> " + mml::to_string(ptr->output(0));
+    return ret;
+  }
+  else
+    return "unknown";
+}
+
 void mml::type_checker::assert_cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to) {
   if (from->name() == cdk::TYPE_INT && to->name() == cdk::TYPE_DOUBLE) {
     // Integers can be casted to doubles.
     return;
   } else if (from->name() != to->name()) {
-    throw std::string("cannot cast '" + cdk::to_string(from) + "' to '" + cdk::to_string(to) + "'");
+    throw std::string("cannot cast '" + mml::to_string(from) + "' to '" + mml::to_string(to) + "'");
   }
 
   try {
@@ -40,7 +69,7 @@ void mml::type_checker::assert_cast(std::shared_ptr<cdk::basic_type> from, std::
       assert_cast(fromFunc->output(), toFunc->output());
     }
   } catch (std::string &e) {
-    e = "cannot cast '" + cdk::to_string(from) + "' to '" + cdk::to_string(to) + "'\n" + e;
+    e = "cannot cast '" + mml::to_string(from) + "' to '" + mml::to_string(to) + "'\n" + e;
     throw e;
   }
 }
@@ -93,7 +122,7 @@ void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
   ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
   if (!node->argument()->is_typed(cdk::TYPE_INT)) {
-    throw std::string("expected int in argument of not operator, found " + cdk::to_string(node->argument()->type()));
+    throw std::string("expected int in argument of not operator, found " + mml::to_string(node->argument()->type()));
   }
 }
 
@@ -102,7 +131,7 @@ void mml::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
   processUnaryExpression(node, lvl);
 
   if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("expected int or double in argument of neg operator, found " + cdk::to_string(node->argument()->type()));
+    throw std::string("expected int or double in argument of neg operator, found " + mml::to_string(node->argument()->type()));
   }
 }
 
@@ -110,7 +139,7 @@ void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl
   ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
   if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("expected int or double in argument of identity operator, found " + cdk::to_string(node->argument()->type()));
+    throw std::string("expected int or double in argument of identity operator, found " + mml::to_string(node->argument()->type()));
   }
 }
 
@@ -122,7 +151,7 @@ void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
 void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
   if (!node->argument()->is_typed(cdk::TYPE_INT)) {
-    throw std::string("expected int in argument of stack allocation operator, found " + cdk::to_string(node->argument()->type()));
+    throw std::string("expected int in argument of stack allocation operator, found " + mml::to_string(node->argument()->type()));
   }
 
   // Type is left unspecified because it is

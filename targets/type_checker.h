@@ -6,6 +6,10 @@
 #include <cdk/types/functional_type.h>
 
 namespace mml {
+  /**
+   * Prints a type as a string.
+   */
+  std::string to_string(std::shared_ptr<cdk::basic_type> type);
 
   /**
    * Print nodes as XML elements to the output stream.
