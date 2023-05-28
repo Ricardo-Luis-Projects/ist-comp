@@ -104,8 +104,8 @@ global_declarations :                     global_declaration ';' { $$ = new cdk:
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
-global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); }
-                   | qualifier type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $4, $2); }
+global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); delete $3; }
+                   | qualifier type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $4, $2); delete $3; }
                    | declaration                                    { $$ = $1; }
                    ;
 
@@ -113,8 +113,8 @@ declarations :              declaration ';' { $$ = new cdk::sequence_node(LINE, 
              | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, *$2, $3); }
-            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, *$2, $3, $1); }
+declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, *$2, $3); delete $2; }
+            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, *$2, $3, $1); delete $2; }
             ;
 
 qualifier : tPUBLIC  { $$ = tPUBLIC; }
@@ -152,7 +152,7 @@ type : tINT          { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
      ;
 
 function_type : type '<' '>'                { $$ = cdk::functional_type::create($1); }
-              | type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); }
+              | type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); delete $3; }
               ;
 
 argument_types :                    type { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>({$1}); }
@@ -240,7 +240,7 @@ literal : tLINTEGER { $$ = new cdk::integer_node(LINE, $1); }
         ;
 
 string : tLSTRING        { $$ = $1; }
-       | tLSTRING string { $$ = new std::string(*$1 + *$2); }
+       | tLSTRING string { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
        ;
 
 function : '(' opt_arguments ')' tGIVES type block { $$ = new mml::function_node(LINE, $2, $6, $5); }
@@ -254,14 +254,14 @@ arguments : argument               { $$ = new cdk::sequence_node(LINE, $1); }
           | arguments ',' argument { $$ = new cdk::sequence_node(LINE, $3, $1); }
           ;
 
-argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, *$2, $1); }
+argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, *$2, $1); delete $2; }
          ;
 
 call : expression '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3, $1); }
      | '@'        '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3); }
      ;
 
-lvalue : tIDENTIFIER                           { $$ = new cdk::variable_node(LINE, $1); }
+lvalue : tIDENTIFIER                   { $$ = new cdk::variable_node(LINE, $1); }
        | expression '[' expression ']' { $$ = new mml::index_node(LINE, $1, $3); }
        ;
 
