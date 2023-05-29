@@ -119,22 +119,22 @@
   /* 3.8.3 - STRINGS                                                        */
   /* ====================================================================== */
 
-\"                      yy_push_state(X_STRING); yylval.s = new std::string("");
-<X_STRING>\"            yy_pop_state(); return tLSTRING;
-<X_STRING>\\            yy_push_state(X_BACKSLASH);
-<X_STRING>.             *yylval.s += yytext;
-<X_STRING>\n            yyerror("Newline in string");
+\"                           yy_push_state(X_STRING); yylval.s = new std::string("");
+<X_STRING>\"                 yy_pop_state(); return tLSTRING;
+<X_STRING>\\                 yy_push_state(X_BACKSLASH);
+<X_STRING>.                  *yylval.s += yytext;
+<X_STRING>\n                 yyerror("Newline in string");
 
-<X_NULL>\"              yy_pop_state(); yy_pop_state(); return tLSTRING;
-<X_NULL>.|\\\"|\\\\     ;
-<X_NULL>\n              yyerror("Newline in string");
+<X_NULL>\"                   yy_pop_state(); yy_pop_state(); return tLSTRING;
+<X_NULL>.|\\\"|\\\\          ;
+<X_NULL>\n                   yyerror("Newline in string");
 
-<X_BACKSLASH>n          yy_pop_state(); *yylval.s += '\n';
-<X_BACKSLASH>r          yy_pop_state(); *yylval.s += '\r';
-<X_BACKSLASH>t          yy_pop_state(); *yylval.s += '\t';
-<X_BACKSLASH>0{1,3}     yy_pop_state(); yy_push_state(X_NULL);
-<X_BACKSLASH>[0-7]{1,3} yy_pop_state(); *yylval.s += strtoul(yytext, NULL, 8);
-<X_BACKSLASH>.          yy_pop_state(); *yylval.s += yytext;
+<X_BACKSLASH>n               yy_pop_state(); *yylval.s += '\n';
+<X_BACKSLASH>r               yy_pop_state(); *yylval.s += '\r';
+<X_BACKSLASH>t               yy_pop_state(); *yylval.s += '\t';
+<X_BACKSLASH>0{1,3}          yy_pop_state(); yy_push_state(X_NULL);
+<X_BACKSLASH>[0-3][0-7]{0,2} yy_pop_state(); *yylval.s += strtoul(yytext, NULL, 8);
+<X_BACKSLASH>.               yy_pop_state(); *yylval.s += yytext;
 
   /* ====================================================================== */
   /* 3.8.4 - POINTERS                                                       */
