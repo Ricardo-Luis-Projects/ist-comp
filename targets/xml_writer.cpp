@@ -255,7 +255,9 @@ void mml::xml_writer::do_call_node(mml::call_node *const node, int lvl) {
 
 void mml::xml_writer::do_return_node(mml::return_node *const node, int lvl) {
   openTag(node, lvl);
-  node->retval()->accept(this, lvl + 2);
+  if (node->retval() != nullptr) {
+    node->retval()->accept(this, lvl + 2);
+  }
   closeTag(node, lvl);
 }
 
