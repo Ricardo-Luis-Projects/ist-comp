@@ -78,7 +78,7 @@
 %type <sequence> file global_declarations declarations instructions
 %type <sequence> opt_expressions expressions opt_arguments arguments
 %type <variable_declaration> global_declaration declaration argument
-%type <i> qualifier opt_nesting
+%type <i> forward_or_foreign opt_nesting
 %type <type> type function_type
 %type <types> argument_types
 %type <function> program function
@@ -104,9 +104,10 @@ global_declarations :                     global_declaration ';' { $$ = new cdk:
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
-global_declaration : tPUBLIC   opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); delete $3; }
-                   | qualifier type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $4, $2); delete $3; }
-                   | declaration                                    { $$ = $1; }
+global_declaration : tPUBLIC            opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); delete $3; }
+                   | tPUBLIC            type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4, $2); delete $3; }
+                   | forward_or_foreign type     tIDENTIFIER                 { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $2); delete $3; }
+                   | declaration                                             { $$ = $1; }
                    ;
 
 declarations :              declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
@@ -117,10 +118,9 @@ declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declara
             | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, *$2, $3, $1); delete $2; }
             ;
 
-qualifier : tPUBLIC  { $$ = tPUBLIC; }
-          | tFORWARD { $$ = tFORWARD; }
-          | tFOREIGN { $$ = tFOREIGN; }
-          ;
+forward_or_foreign : tFORWARD { $$ = tFORWARD; }
+                   | tFOREIGN { $$ = tFOREIGN; }
+                   ;
 
 opt_initializer : /* empty */ { $$ = nullptr; }
                 | initializer { $$ = $1; }
