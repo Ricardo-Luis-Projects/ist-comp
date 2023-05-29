@@ -11,6 +11,9 @@
 
 // don't change this
 #define yyerror LexerError
+
+// utility function to prevent duplicating logic on integer literals
+bool parsei(const std::string& str, int base, int& out);
 %}
 
 %x X_COMMENT
@@ -104,8 +107,8 @@
   /* 3.8.1 - INTEGERS                                                       */
   /* ====================================================================== */
 
-[1-9][0-9]*  yylval.i = strtol(yytext, nullptr, 10); return tLINTEGER;
-0[0-7]*      yylval.i = strtol(yytext, nullptr, 8); return tLINTEGER;
+[1-9][0-9]*  if (!parsei(yytext, 10, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
+0[0-7]*      if (!parsei(yytext, 8, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
 0[0-7]*[8-9] yyerror("Invalid octal number");
 
   /* ====================================================================== */
@@ -122,10 +125,12 @@
 \"                           yy_push_state(X_STRING); yylval.s = new std::string("");
 <X_STRING>\"                 yy_pop_state(); return tLSTRING;
 <X_STRING>\\                 yy_push_state(X_BACKSLASH);
+<X_STRING>\0                 yyerror("Null byte in string");
 <X_STRING>.                  *yylval.s += yytext;
 <X_STRING>\n                 yyerror("Newline in string");
 
 <X_NULL>\"                   yy_pop_state(); yy_pop_state(); return tLSTRING;
+<X_NULL>\0                   yyerror("Null byte in string");
 <X_NULL>.|\\\"|\\\\          ;
 <X_NULL>\n                   yyerror("Newline in string");
 
@@ -150,3 +155,12 @@
 . yyerror("Unknown character");
 
 %%
+
+bool parsei(const std::string& str, int base, int& out) {
+  try {
+    out = std::stoi(str, nullptr, base);
+    return true;
+  } catch (std::out_of_range&) {
+    return false;
+  }
+}
