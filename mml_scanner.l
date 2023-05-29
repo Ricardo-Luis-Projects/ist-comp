@@ -134,6 +134,7 @@
 <X_BACKSLASH>t               yy_pop_state(); *yylval.s += '\t';
 <X_BACKSLASH>0{1,3}          yy_pop_state(); yy_push_state(X_NULL);
 <X_BACKSLASH>[0-3][0-7]{0,2} yy_pop_state(); *yylval.s += strtoul(yytext, NULL, 8);
+<X_BACKSLASH>[4-7][0-7]{2}   yyerror("Special character overflow");
 <X_BACKSLASH>.               yy_pop_state(); *yylval.s += yytext;
 
   /* ====================================================================== */
