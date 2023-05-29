@@ -98,7 +98,7 @@
   /* 3.7 - IDENTIFIERS                                                      */
   /* ====================================================================== */
 
-[A-Za-z][A-Za-z0-9_]* yylval.s = new std::string(yytext); return tIDENTIFIER;
+[A-Za-z][A-Za-z0-9]* yylval.s = new std::string(yytext); return tIDENTIFIER;
 
   /* ====================================================================== */
   /* 3.8.1 - INTEGERS                                                       */
