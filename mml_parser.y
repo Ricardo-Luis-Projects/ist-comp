@@ -40,7 +40,7 @@
   cdk::lvalue_node               *lvalue;
 };
 
-%token <i> tFOREIGN tFORWARD tPUBLIC tAUTO
+%token tFOREIGN tFORWARD tPUBLIC tUNQUALIFIED tAUTO
 %token tIF tELIF tELSE tWHILE tSTOP tNEXT tRETURN
 %token tINPUT tSIZEOF
 %token tBEGIN tEND
@@ -114,8 +114,8 @@ declarations :              declaration ';' { $$ = new cdk::sequence_node(LINE, 
              | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, *$2, $3); delete $2; }
-            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, *$2, $3, $1); delete $2; }
+declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3); delete $2; }
+            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3, $1); delete $2; }
             ;
 
 forward_or_foreign : tFORWARD { $$ = tFORWARD; }
@@ -254,7 +254,7 @@ arguments : argument               { $$ = new cdk::sequence_node(LINE, $1); }
           | arguments ',' argument { $$ = new cdk::sequence_node(LINE, $3, $1); }
           ;
 
-argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, *$2, $1); delete $2; }
+argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $1); delete $2; }
          ;
 
 call : expression '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3, $1); }

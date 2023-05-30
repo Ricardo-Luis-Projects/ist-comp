@@ -172,7 +172,7 @@ void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
 
 void mml::xml_writer::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
   os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->name() << '\'';
-  if (node->qualifier() != 0) {
+  if (node->qualifier() != tUNQUALIFIED) {
     os() << " qualifier='" << qualifier_name(node->qualifier()) << '\'';
   }
   if (node->type() != nullptr) {
