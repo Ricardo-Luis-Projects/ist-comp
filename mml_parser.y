@@ -79,7 +79,7 @@
 %type <sequence> opt_expressions expressions opt_arguments arguments
 %type <variable_declaration> global_declaration declaration argument
 %type <i> forward_or_foreign opt_nesting
-%type <type> type function_type
+%type <type> type non_void_type function_type
 %type <types> argument_types
 %type <function> program function
 %type <block> block inner_block
@@ -104,18 +104,18 @@ global_declarations :                     global_declaration ';' { $$ = new cdk:
                     | global_declarations global_declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
                     ;
 
-global_declaration : tPUBLIC            opt_auto tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); delete $3; }
-                   | tPUBLIC            type     tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4, $2); delete $3; }
-                   | forward_or_foreign type     tIDENTIFIER                 { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $2); delete $3; }
-                   | declaration                                             { $$ = $1; }
+global_declaration : tPUBLIC            opt_auto      tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4); delete $3; }
+                   | tPUBLIC            non_void_type tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tPUBLIC, *$3, $4, $2); delete $3; }
+                   | forward_or_foreign non_void_type tIDENTIFIER                 { $$ = new mml::variable_declaration_node(LINE, $1, *$3, $2); delete $3; }
+                   | declaration                                                  { $$ = $1; }
                    ;
 
 declarations :              declaration ';' { $$ = new cdk::sequence_node(LINE, $1); }
              | declarations declaration ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
 
-declaration : tAUTO tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3); delete $2; }
-            | type  tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3, $1); delete $2; }
+declaration : tAUTO         tIDENTIFIER initializer     { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3); delete $2; }
+            | non_void_type tIDENTIFIER opt_initializer { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $3, $1); delete $2; }
             ;
 
 forward_or_foreign : tFORWARD { $$ = tFORWARD; }
@@ -133,30 +133,33 @@ opt_auto : /* empty */
          | tAUTO
          ;
 
-type : tINT          { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
-     | tDOUBLE       { $$ = cdk::primitive_type::create(8, cdk::TYPE_DOUBLE); }
-     | tSTRING       { $$ = cdk::primitive_type::create(4, cdk::TYPE_STRING); }
+type : non_void_type { $$ = $1; }
      | tVOID         { $$ = cdk::primitive_type::create(0, cdk::TYPE_VOID); }
-     | function_type { $$ = $1; }
-     | '[' type ']'  {
-          bool is_void_pointer =
-               $2->name() == cdk::TYPE_POINTER &&
-               cdk::reference_type::cast($2)->referenced()->name() == cdk::TYPE_VOID;
-
-          if (is_void_pointer) {
-               $$ = $2;
-          } else {
-               $$ = cdk::reference_type::create(4, $2);
-          }
-     }
      ;
+
+non_void_type : tINT          { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
+              | tDOUBLE       { $$ = cdk::primitive_type::create(8, cdk::TYPE_DOUBLE); }
+              | tSTRING       { $$ = cdk::primitive_type::create(4, cdk::TYPE_STRING); }
+              | function_type { $$ = $1; }
+              | '[' type ']'  {
+                  bool is_void_pointer =
+                  $2->name() == cdk::TYPE_POINTER &&
+                  cdk::reference_type::cast($2)->referenced()->name() == cdk::TYPE_VOID;
+
+                  if (is_void_pointer) {
+                      $$ = $2;
+                  } else {
+                      $$ = cdk::reference_type::create(4, $2);
+                  }
+              }
+              ;
 
 function_type : type '<' '>'                { $$ = cdk::functional_type::create($1); }
               | type '<' argument_types '>' { $$ = cdk::functional_type::create(*$3, $1); delete $3; }
               ;
 
-argument_types :                    type { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>({$1}); }
-               | argument_types ',' type { $$ = $1; $1->push_back($3); }
+argument_types :                    non_void_type { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>({$1}); }
+               | argument_types ',' non_void_type { $$ = $1; $1->push_back($3); }
                ;
 
 program : tBEGIN inner_block tEND { $$ = new mml::function_node(LINE, $2); }
@@ -254,7 +257,7 @@ arguments : argument               { $$ = new cdk::sequence_node(LINE, $1); }
           | arguments ',' argument { $$ = new cdk::sequence_node(LINE, $3, $1); }
           ;
 
-argument : type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $1); delete $2; }
+argument : non_void_type tIDENTIFIER { $$ = new mml::variable_declaration_node(LINE, tUNQUALIFIED, *$2, $1); delete $2; }
          ;
 
 call : expression '(' opt_expressions ')' { $$ = new mml::call_node(LINE, $3, $1); }
