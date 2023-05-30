@@ -14,6 +14,9 @@
 
 // utility function to prevent duplicating logic on integer literals
 bool parseint(const std::string& str, int base, int& out);
+
+// utility function to prevent duplicating logic on floating point literals
+bool parsedouble(const std::string& str, double& out);
 %}
 
 %x X_COMMENT
@@ -115,8 +118,8 @@ bool parseint(const std::string& str, int base, int& out);
   /* 3.8.2 - FLOATING POINT NUMBERS                                         */
   /* ====================================================================== */
 
-[0-9]+[eE][+-]?[0-9]+                             yylval.d = strtod(yytext, NULL); return tLDOUBLE;
-([0-9]*\.[0-9]+|[0-9]+\.[0-9]*)([eE][-+]?[0-9]+)? yylval.d = strtod(yytext, NULL); return tLDOUBLE;
+[0-9]+[eE][+-]?[0-9]+                             if (!parsedouble(yytext, yylval.d)) yyerror("Floating point overflow"); return tLDOUBLE;
+([0-9]*\.[0-9]+|[0-9]+\.[0-9]*)([eE][-+]?[0-9]+)? if (!parsedouble(yytext, yylval.d)) yyerror("Floating point overflow"); return tLDOUBLE;
 
   /* ====================================================================== */
   /* 3.8.3 - STRINGS                                                        */
@@ -159,6 +162,15 @@ bool parseint(const std::string& str, int base, int& out);
 bool parseint(const std::string& str, int base, int& out) {
   try {
     out = std::stoi(str, nullptr, base);
+    return true;
+  } catch (std::out_of_range&) {
+    return false;
+  }
+}
+
+bool parsedouble(const std::string& str, double& out) {
+  try {
+    out = std::stod(str, nullptr);
     return true;
   } catch (std::out_of_range&) {
     return false;
