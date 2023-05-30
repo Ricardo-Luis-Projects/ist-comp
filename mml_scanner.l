@@ -13,7 +13,7 @@
 #define yyerror LexerError
 
 // utility function to prevent duplicating logic on integer literals
-bool parsei(const std::string& str, int base, int& out);
+bool parseint(const std::string& str, int base, int& out);
 %}
 
 %x X_COMMENT
@@ -107,8 +107,8 @@ bool parsei(const std::string& str, int base, int& out);
   /* 3.8.1 - INTEGERS                                                       */
   /* ====================================================================== */
 
-[1-9][0-9]*  if (!parsei(yytext, 10, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
-0[0-7]*      if (!parsei(yytext, 8, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
+[1-9][0-9]*  if (!parseint(yytext, 10, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
+0[0-7]*      if (!parseint(yytext, 8, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
 0[0-7]*[8-9] yyerror("Invalid octal number");
 
   /* ====================================================================== */
@@ -156,7 +156,7 @@ bool parsei(const std::string& str, int base, int& out);
 
 %%
 
-bool parsei(const std::string& str, int base, int& out) {
+bool parseint(const std::string& str, int base, int& out) {
   try {
     out = std::stoi(str, nullptr, base);
     return true;
