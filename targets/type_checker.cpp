@@ -82,15 +82,11 @@ static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_ty
     return {from, from};
   }
 
-  if (from->name() == cdk::TYPE_VOID && to->name() == cdk::TYPE_VOID) {
+  if (from->name() == to->name() && (to->name() == cdk::TYPE_VOID || to->name() == cdk::TYPE_INT || to->name() == cdk::TYPE_DOUBLE || to->name() == cdk::TYPE_STRING)) {
     return {from, to};
   }
 
-  if (from->name() == cdk::TYPE_INT && (to->name() == cdk::TYPE_INT || to->name() == cdk::TYPE_DOUBLE)) {
-    return {from, to};
-  }
-  
-  if (from->name() == cdk::TYPE_DOUBLE && to->name() == cdk::TYPE_DOUBLE) {
+  if (from->name() == cdk::TYPE_INT && to->name() == cdk::TYPE_DOUBLE) {
     return {from, to};
   }
   
@@ -332,7 +328,7 @@ void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
   ASSERT_UNSPEC;
 
   node->argument()->accept(this, lvl + 2);
-  unify_node_to_type(node->argument(), default_to_int(node->argument()->type()), lvl + 2); 
+  default_node_to_int(node->argument(), lvl + 2);
 
   node->type(create_int());
 }
@@ -769,7 +765,7 @@ void mml::type_checker::do_print_node(mml::print_node *const node, int lvl) {
     // We only unify to int if the type is still unspecified.
     if (typed->is_typed(cdk::TYPE_UNSPEC)) {
       unify_node_to_type(typed, create_int(), lvl + 2);
-    } else if (!typed->is_typed(cdk::TYPE_INT) && !typed->is_typed(cdk::TYPE_DOUBLE) && !typed->is_typed(cdk::TYPE_STRING)) {
+    } else if (!typed->is_typed(cdk::TYPE_INT) && !typed->is_typed(cdk::TYPE_DOUBLE) && !typed->is_typed(cdk::TYPE_STRING) && !typed->is_typed(cdk::TYPE_VOID)) {
       throw std::string("wrong type in print expression");
     }
   }
