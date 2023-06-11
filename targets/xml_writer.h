@@ -3,6 +3,7 @@
 
 #include "targets/basic_ast_visitor.h"
 #include <cdk/ast/basic_node.h>
+#include <cdk/types/functional_type.h>
 
 namespace mml {
 
@@ -11,10 +12,11 @@ namespace mml {
    */
   class xml_writer: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
+    std::shared_ptr<cdk::functional_type> _functionType;
 
   public:
     xml_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab) :
-        basic_ast_visitor(compiler), _symtab(symtab) {
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr) {
     }
 
   public:

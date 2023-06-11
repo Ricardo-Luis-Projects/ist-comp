@@ -233,11 +233,16 @@ void mml::xml_writer::do_function_node(mml::function_node * const node, int lvl)
   os() << std::string(lvl, ' ') << "<" << node->label() << " main='";
   os() << (node->main() ? "true" : "false") << "' return_type='" << mml::to_string(node->output_type()) << "'>" << std::endl;
 
+  auto oldFunctionType = _functionType;
+  _functionType = cdk::functional_type::cast(node->type());
+
   openTag("arguments", lvl + 2);
   node->arguments()->accept(this, lvl + 4);
   closeTag("arguments", lvl + 2);
 
   node->block()->accept(this, lvl + 2);
+
+  _functionType = oldFunctionType;
 
   closeTag(node, lvl);
 }

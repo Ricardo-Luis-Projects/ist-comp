@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <cdk/emitters/basic_postfix_emitter.h>
+#include <cdk/types/functional_type.h>
 
 namespace mml {
 
@@ -13,13 +14,14 @@ namespace mml {
   //!
   class postfix_writer: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
+    std::shared_ptr<cdk::functional_type> _functionType;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
 
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,
                    cdk::basic_postfix_emitter &pf) :
-        basic_ast_visitor(compiler), _symtab(symtab), _pf(pf), _lbl(0) {
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _pf(pf), _lbl(0) {
     }
 
   public:

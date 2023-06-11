@@ -4,7 +4,6 @@
 #include "targets/basic_ast_visitor.h"
 
 #include <cdk/types/functional_type.h>
-#include <stack>
 
 namespace mml {
   /**
@@ -17,16 +16,16 @@ namespace mml {
    */
   class type_checker: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
+    std::shared_ptr<cdk::functional_type> _functionType;
 
     basic_ast_visitor *_parent;
 
-    std::stack<std::shared_ptr<cdk::functional_type>> _functionType;
     bool _isPropagating = false;
     bool _isTesting = false;
 
   public:
-    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, basic_ast_visitor *parent) :
-        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent) {
+    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType, basic_ast_visitor *parent) :
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(functionType), _parent(parent) {
     }
 
   public:
@@ -47,6 +46,7 @@ namespace mml {
     std::shared_ptr<cdk::basic_type> unify_node_to_type(cdk::typed_node *const from, std::shared_ptr<cdk::basic_type> to, int lvl);
     void unify_node_to_node(cdk::typed_node *const from, cdk::typed_node *const to, int lvl);
     bool test_unify_node_to_type(cdk::typed_node *const from, std::shared_ptr<cdk::basic_type> to, int lvl);
+    void default_node_to_int(cdk::typed_node *const node, int lvl);
     void propagate(cdk::typed_node *const node, int lvl);
 
   public:
@@ -64,9 +64,9 @@ namespace mml {
 //     HELPER MACRO FOR TYPE CHECKING
 //---------------------------------------------------------------------------
 
-#define CHECK_TYPES(compiler, symtab, node) { \
+#define CHECK_TYPES(compiler, symtab, functionType, node) { \
   try { \
-    mml::type_checker checker(compiler, symtab, this); \
+    mml::type_checker checker(compiler, symtab, functionType, this); \
     (node)->accept(&checker, 0); \
   } \
   catch (const std::string &problem) { \
@@ -75,6 +75,6 @@ namespace mml {
   } \
 }
 
-#define ASSERT_SAFE_EXPRESSIONS CHECK_TYPES(_compiler, _symtab, node)
+#define ASSERT_SAFE_EXPRESSIONS CHECK_TYPES(_compiler, _symtab, _functionType, node)
 
 #endif

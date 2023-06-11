@@ -216,6 +216,8 @@ void mml::postfix_writer::do_stack_alloc_node(mml::stack_alloc_node *const node,
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
+  auto oldFunctionType = _functionType;
+  _functionType = cdk::functional_type::cast(node->type());
 
   // generate the main function (RTS mandates that its name be "_main")
   _pf.TEXT();
@@ -237,6 +239,8 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
   _pf.EXTERN("printi");
   _pf.EXTERN("prints");
   _pf.EXTERN("println");
+
+  _functionType = oldFunctionType;
 }
 
 //---------------------------------------------------------------------------
