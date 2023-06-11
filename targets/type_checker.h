@@ -4,6 +4,7 @@
 #include "targets/basic_ast_visitor.h"
 
 #include <cdk/types/functional_type.h>
+#include <stack>
 
 namespace mml {
   /**
@@ -19,11 +20,13 @@ namespace mml {
 
     basic_ast_visitor *_parent;
 
-    std::shared_ptr<cdk::functional_type> _currentFunctionType;
+    std::stack<std::shared_ptr<cdk::functional_type>> _functionType;
+    bool _isPropagating = false;
+    bool _isTesting = false;
 
   public:
     type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, basic_ast_visitor *parent) :
-        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent), _currentFunctionType(nullptr) {
+        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent) {
     }
 
   public:
@@ -33,13 +36,18 @@ namespace mml {
 
   protected:
     void processUnaryExpression(cdk::unary_operation_node *const node, int lvl);
-    void processBinaryExpression(cdk::binary_operation_node *const node, int lvl);
+    void processMulExpression(cdk::binary_operation_node *const node, int lvl);
+    void processCmpExpression(cdk::binary_operation_node *const node, int lvl);
+    void processEqExpression(cdk::binary_operation_node *const node, int lvl);
+    void processLogicalExpression(cdk::binary_operation_node *const node, int lvl);
     template<typename T>
     void process_literal(cdk::literal_node<T> *const node, int lvl) {
     }
 
-    /** Asserts that a type can be casted to another type. */
-    void assert_cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to);
+    std::shared_ptr<cdk::basic_type> unify_node_to_type(cdk::typed_node *const from, std::shared_ptr<cdk::basic_type> to, int lvl);
+    void unify_node_to_node(cdk::typed_node *const from, cdk::typed_node *const to, int lvl);
+    bool test_unify_node_to_type(cdk::typed_node *const from, std::shared_ptr<cdk::basic_type> to, int lvl);
+    void propagate(cdk::typed_node *const node, int lvl);
 
   public:
     // do not edit these lines

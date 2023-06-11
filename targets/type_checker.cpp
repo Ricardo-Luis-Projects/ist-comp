@@ -7,19 +7,32 @@
 
 std::string mml::to_string(std::shared_ptr<cdk::basic_type> type)
 {
-  if (type->name() == cdk::TYPE_VOID)
+  if (type->name() == cdk::TYPE_VOID) {
     return "void";
-  else if (type->name() == cdk::TYPE_INT)
+  }
+
+  if (type->name() == cdk::TYPE_INT) {
     return "int";
-  else if (type->name() == cdk::TYPE_DOUBLE)
+  }
+
+  if (type->name() == cdk::TYPE_DOUBLE) {
     return "double";
-  else if (type->name() == cdk::TYPE_STRING)
+  }
+
+  if (type->name() == cdk::TYPE_STRING) {
     return "string";
-  else if (type->name() == cdk::TYPE_POINTER) {
+  }
+
+  if (type->name() == cdk::TYPE_UNSPEC) {
+    return "unspec";
+  }
+
+  if (type->name() == cdk::TYPE_POINTER) {
     auto ptr = std::dynamic_pointer_cast<cdk::reference_type>(type);
     return '[' + mml::to_string(ptr->referenced()) + ']';
   }
-  else if (type->name() == cdk::TYPE_FUNCTIONAL) {
+  
+  if (type->name() == cdk::TYPE_FUNCTIONAL) {
     auto ptr = std::dynamic_pointer_cast<cdk::functional_type>(type);
     std::string ret = "(";
     for (size_t i = 0; i < ptr->input_length(); i++) {
@@ -30,48 +43,185 @@ std::string mml::to_string(std::shared_ptr<cdk::basic_type> type)
     ret += ") -> " + mml::to_string(ptr->output(0));
     return ret;
   }
-  else
-    return "unknown";
+
+  return "unknown";
 }
 
-void mml::type_checker::assert_cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to) {
-  if (from->name() == cdk::TYPE_INT && to->name() == cdk::TYPE_DOUBLE) {
-    // Integers can be casted to doubles.
-    return;
-  } else if (from->name() != to->name()) {
-    throw std::string("cannot cast '" + mml::to_string(from) + "' to '" + mml::to_string(to) + "'");
+static std::shared_ptr<cdk::primitive_type> create_unspec() {
+  return cdk::primitive_type::create(0, cdk::TYPE_UNSPEC);
+}
+
+static std::shared_ptr<cdk::primitive_type> create_int() {
+  return cdk::primitive_type::create(4, cdk::TYPE_INT);
+}
+
+static std::shared_ptr<cdk::primitive_type> create_double() {
+  return cdk::primitive_type::create(8, cdk::TYPE_DOUBLE);
+}
+
+static std::shared_ptr<cdk::reference_type> create_pointer(std::shared_ptr<cdk::basic_type> referenced) {
+  return cdk::reference_type::create(4, referenced);
+}
+
+static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_type>> unify(
+    std::shared_ptr<cdk::basic_type> from,
+    std::shared_ptr<cdk::basic_type> to) {
+  if (from->name() == cdk::TYPE_UNSPEC) {
+    return {to, to};
   }
-
+  
+  if (to->name() == cdk::TYPE_UNSPEC) {
+    return {from, from};
+  }
+  
+  if (from->name() == cdk::TYPE_INT && (to->name() == cdk::TYPE_INT || to->name() == cdk::TYPE_DOUBLE)) {
+    return {from, to};
+  }
+  
+  if (from->name() == cdk::TYPE_DOUBLE && to->name() == cdk::TYPE_DOUBLE) {
+    return {from, to};
+  }
+  
   try {
-    if (from->name() == cdk::TYPE_POINTER) {
-      auto fromPtr = std::dynamic_pointer_cast<cdk::reference_type>(from);
-      auto toPtr = std::dynamic_pointer_cast<cdk::reference_type>(to);
+    if (from->name() == cdk::TYPE_POINTER && to->name() == cdk::TYPE_POINTER) {
+      auto fromReferenced = cdk::reference_type::cast(from)->referenced();
+      auto toReferenced = cdk::reference_type::cast(to)->referenced();
+      if (fromReferenced->name() != cdk::TYPE_VOID && toReferenced->name() != cdk::TYPE_VOID) {
+        auto [newFromReferenced, newToReferenced] = unify(fromReferenced, toReferenced);
 
-      // If either is a void pointer, we can cast - nested void pointers are parsed as just one void pointer.
-      if (fromPtr->referenced()->name() == cdk::TYPE_VOID || toPtr->referenced()->name() == cdk::TYPE_VOID) {
-        return;
+        if (newFromReferenced.get() != fromReferenced.get()) {
+          from = create_pointer(newFromReferenced);
+        }
+
+        if (newToReferenced.get() != toReferenced.get()) {
+          to = create_pointer(newToReferenced);
+        }
       }
 
-      assert_cast(fromPtr->referenced(), toPtr->referenced());
-    } else if (from->name() == cdk::TYPE_FUNCTIONAL) {
-      auto fromFunc = std::dynamic_pointer_cast<cdk::functional_type>(from);
-      auto toFunc = std::dynamic_pointer_cast<cdk::functional_type>(to);
-
-      // Must have the same number of arguments.
-      if (fromFunc->input_length() != toFunc->input_length()) {
-        throw std::string("different number of arguments");
-      }
-
-      for (size_t i = 0; i < fromFunc->input_length(); i++) {
-        assert_cast(toFunc->input(i), fromFunc->input(i));
-      }
-
-      assert_cast(fromFunc->output(), toFunc->output());
+      return {from, to};
     }
-  } catch (std::string &e) {
+    
+    if (from->name() == cdk::TYPE_FUNCTIONAL && to->name() == cdk::TYPE_FUNCTIONAL) {
+      auto fromFunc = cdk::functional_type::cast(from);
+      auto toFunc = cdk::functional_type::cast(to);
+
+      if (fromFunc->input_length() != toFunc->input_length()) {
+        throw std::string("cannot unify functions with different arguments");
+      }
+
+      std::vector<std::shared_ptr<cdk::basic_type>> fromInputs;
+      std::vector<std::shared_ptr<cdk::basic_type>> toInputs;
+      bool fromInputChanged = false;
+      bool toInputChanged = false;
+
+      for (std::size_t i = 0; i < fromFunc->input_length(); i++) {
+        auto [newTo, newFrom] = unify(toFunc->input(i), fromFunc->input(i));
+        fromInputs.push_back(newFrom);
+        toInputs.push_back(newTo);
+        fromInputChanged |= newFrom.get() != fromFunc->input(i).get();
+        toInputChanged |= newTo.get() != toFunc->input(i).get();
+      }
+
+      auto [fromOutput, toOutput] = unify(fromFunc->output(), toFunc->output());
+      if (fromOutput.get() != fromFunc->output().get() || fromInputChanged) {
+        from = cdk::functional_type::create(fromInputs, fromOutput);
+      }
+      if (toOutput.get() != toFunc->output().get() || toInputChanged) {
+        to = cdk::functional_type::create(toInputs, toOutput);
+      }
+
+      return {from, to};
+    }
+  } catch (std::string& e) {
     e = "cannot cast '" + mml::to_string(from) + "' to '" + mml::to_string(to) + "'\n" + e;
     throw e;
   }
+
+  throw std::string("cannot cast '" + mml::to_string(from) + "' to '" + mml::to_string(to) + "'");
+}
+
+/** Creates a new type where all unspecified types are converted to int. */
+static std::shared_ptr<cdk::basic_type> default_to_int(std::shared_ptr<cdk::basic_type> type) {
+  if (type->name() == cdk::TYPE_UNSPEC) {
+    return cdk::primitive_type::create(4, cdk::TYPE_INT);
+  } else if (type->name() == cdk::TYPE_POINTER) {
+    auto reference = std::dynamic_pointer_cast<cdk::reference_type>(type);
+    auto referenced = default_to_int(reference->referenced());
+    if (reference->referenced().get() != referenced.get()) {
+      return cdk::reference_type::create(4, referenced);
+    } else {
+      return type;
+    }
+  } else if (type->name() == cdk::TYPE_FUNCTIONAL) {
+    auto functional = std::dynamic_pointer_cast<cdk::functional_type>(type);
+
+    std::vector<std::shared_ptr<cdk::basic_type>> inputs;
+    bool inputChanged = false;
+    for (auto& input : functional->input()->components()) {
+      auto newInput = default_to_int(input);
+      inputChanged |= newInput.get() != input.get();
+      inputs.push_back(newInput);
+    }
+
+    auto output = default_to_int(functional->output());
+    if (output.get() != functional->output().get() || inputChanged) {
+      return cdk::functional_type::create(inputs, output);
+    } else {
+      return type;
+    }
+  } else {
+    return type;
+  }
+}
+
+/** Unifies the type of the given node to the given type, returns the unified version of the given type. */
+std::shared_ptr<cdk::basic_type> mml::type_checker::unify_node_to_type(cdk::typed_node *const node, std::shared_ptr<cdk::basic_type> to, int lvl) {
+  auto oldFrom = node->type();
+  
+  try {
+    auto [newFrom, newTo] = unify(oldFrom, to);
+    if (newFrom.get() != oldFrom.get()) {
+      node->type(newFrom);
+      propagate(node, lvl + 2);
+      if (_isTesting) {
+        node->type(oldFrom);
+      }
+    }
+
+    return newTo;
+  } catch (std::string& e) {
+    node->type(oldFrom);
+    e = "failed to unify '" + node->label() + "' from type '" + mml::to_string(oldFrom) + "' to '" + mml::to_string(to) + "'\n" + e;
+    throw e;
+  }
+}
+
+void mml::type_checker::unify_node_to_node(cdk::typed_node *const from, cdk::typed_node *const to, int lvl)
+{
+  to->type(unify_node_to_type(from, to->type(), lvl));
+}
+
+bool mml::type_checker::test_unify_node_to_type(cdk::typed_node *const node, std::shared_ptr<cdk::basic_type> to, int lvl) {
+  _isTesting = true;
+  try {
+    unify_node_to_type(node, to, lvl);
+    _isTesting = false;
+    return true;
+  } catch (std::string&) {
+    _isTesting = false;
+    return false;
+  }
+}
+
+void mml::type_checker::propagate(cdk::typed_node *const node, int lvl) {
+  if (_isPropagating) {
+    node->accept(this, lvl);
+    return;
+  }
+
+  _isPropagating = true;
+  node->accept(this, lvl);
+  _isPropagating = false;
 }
 
 //---------------------------------------------------------------------------
@@ -86,19 +236,21 @@ void mml::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
-  // EMPTY
+  for (auto& node : node->nodes()) {
+    node->accept(this, lvl + 2);
+  }
 }
 
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  node->type(create_int());
 }
 
 void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+  node->type(create_double());
 }
 
 void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
@@ -108,107 +260,356 @@ void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
 
 void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(cdk::reference_type::create(4, cdk::primitive_type::create(0, cdk::TYPE_VOID)));
+  node->type(create_pointer(create_unspec()));
 }
 
 //---------------------------------------------------------------------------
 
-void mml::type_checker::processUnaryExpression(cdk::unary_operation_node *const node, int lvl) {
+void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+
   node->argument()->accept(this, lvl + 2);
+  unify_node_to_type(node->argument(), create_int(), lvl + 2);
   node->type(node->argument()->type());
 }
 
-void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
+void mml::type_checker::processUnaryExpression(cdk::unary_operation_node *const node, int lvl) {
+  if (_isPropagating) {
+    unify_node_to_type(node->argument(), node->type(), lvl + 2);
+    return;
+  }
+
   ASSERT_UNSPEC;
-  processUnaryExpression(node, lvl);
-  if (!node->argument()->is_typed(cdk::TYPE_INT)) {
-    throw std::string("expected int in argument of not operator, found " + mml::to_string(node->argument()->type()));
+
+  node->argument()->accept(this, lvl + 2);
+
+  if (node->argument()->is_typed(cdk::TYPE_DOUBLE) || node->argument()->is_typed(cdk::TYPE_INT) || node->argument()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->type(node->argument()->type());
+  } else {
+    throw std::string("expected int or double in argument of unary operator, found " + mml::to_string(node->argument()->type()));
   }
 }
 
 void mml::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
-  ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
-
-  if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("expected int or double in argument of neg operator, found " + mml::to_string(node->argument()->type()));
-  }
 }
 
 void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl) {
-  ASSERT_UNSPEC;
   processUnaryExpression(node, lvl);
-  if (!node->argument()->is_typed(cdk::TYPE_INT) && !node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
-    throw std::string("expected int or double in argument of identity operator, found " + mml::to_string(node->argument()->type()));
-  }
 }
 
 void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
   ASSERT_UNSPEC;
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+
+  node->argument()->accept(this, lvl + 2);
+  unify_node_to_type(node->argument(), default_to_int(node->argument()->type()), lvl + 2); 
+
+  node->type(create_int());
 }
 
 void mml::type_checker::do_stack_alloc_node(mml::stack_alloc_node *const node, int lvl) {
-  node->argument()->accept(this, lvl + 2);
-  if (!node->argument()->is_typed(cdk::TYPE_INT)) {
-    throw std::string("expected int in argument of stack allocation operator, found " + mml::to_string(node->argument()->type()));
-  }
+  ASSERT_UNSPEC;
 
-  // Type is left unspecified because it is
+  node->argument()->accept(this, lvl + 2);
+
+  unify_node_to_type(node->argument(), create_int(), lvl + 2);
+
+  node->type(create_pointer(create_unspec()));
 }
 
 //---------------------------------------------------------------------------
 
-void mml::type_checker::processBinaryExpression(cdk::binary_operation_node *const node, int lvl) {
-  ASSERT_UNSPEC;
-  node->left()->accept(this, lvl + 2);
-  if (!node->left()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of binary expression");
-
-  node->right()->accept(this, lvl + 2);
-  if (!node->right()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of binary expression");
-
-  // in MML, expressions are always int
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
-}
-
 void mml::type_checker::do_add_node(cdk::add_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  // U + U = U
+  // U + I = U
+  // U + D = D (U <- D)
+  // U + P = P (U <- I)
+  // I + U = U
+  // I + I = I
+  // I + D = D
+  // I + P = P
+  // D + U = D (U <- D)
+  // D + I = D
+  // D + D = D
+  // D + P = boom
+  // P + U = P (U <- I)
+  // P + I = P
+  // P + D = boom
+  // P + P = boom
+
+  if (_isPropagating) {
+    if (node->is_typed(cdk::TYPE_POINTER)) {
+        // Either U + U, U + I or I + U.
+        if (node->left()->is_typed(cdk::TYPE_INT)) {
+          // I + U = P (U <- P).
+          unify_node_to_type(node->right(), node->type(), lvl + 2);
+        } else if (node->right()->is_typed(cdk::TYPE_INT)) {
+          // U + I = P (U <- P).
+          unify_node_to_type(node->left(), node->type(), lvl + 2);
+        } else {
+          // U1 + U2 = P.
+          // Either U1 or U2 must unify with I - we check which is possible.
+          if (test_unify_node_to_type(node->left(), create_int(), lvl + 2) &&
+              test_unify_node_to_type(node->right(), node->type(), lvl + 2)) {
+            unify_node_to_type(node->left(), create_int(), lvl + 2);
+            unify_node_to_type(node->right(), node->type(), lvl + 2);
+          } else {
+            unify_node_to_type(node->left(), node->type(), lvl + 2);
+            unify_node_to_type(node->right(), create_int(), lvl + 2);
+          }
+        }
+    } else {
+      // Both arguments unify with the expression type, removing any previous unspecified type.
+      unify_node_to_type(node->left(), node->type(), lvl + 2);
+      unify_node_to_type(node->right(), node->type(), lvl + 2);
+    }
+
+    return;
+  }
+
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+
+  // Given x + y = z
+  if (node->left()->is_typed(cdk::TYPE_POINTER)) {
+    // If x = P, then y <- I, z = P
+    unify_node_to_type(node->right(), create_int(), lvl + 2);
+    node->type(node->left()->type()); // Results in a pointer.
+  } else if (node->right()->is_typed(cdk::TYPE_POINTER)) {
+    // Else if y = P, then x <- I, z = P
+    unify_node_to_type(node->left(), create_int(), lvl + 2);
+    node->type(node->right()->type()); // Results in a pointer.
+  } else if (node->left()->is_typed(cdk::TYPE_DOUBLE)) {
+    // Else if, x = D, then y <- D, z = D
+    unify_node_to_type(node->right(), create_double(), lvl + 2);
+    node->type(node->left()->type()); // Results in a double.
+  } else if (node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    // Else if, y = D, then x <- D, z = D
+    unify_node_to_type(node->left(), create_double(), lvl + 2);
+    node->type(node->right()->type()); // Results in a double.
+  } else if (node->left()->is_typed(cdk::TYPE_INT) && node->right()->is_typed(cdk::TYPE_INT)) {
+    // Else if, x = I and y = I, then z = I
+    node->type(node->left()->type()); // Results in an int.
+  } else if (node->left()->is_typed(cdk::TYPE_INT) && node->right()->is_typed(cdk::TYPE_UNSPEC)) {
+    // Else if, x = I and y = U, then z = U
+    node->type(node->right()->type()); // Remains unspecified - leave decision between int and double to the parent.
+  } else if (node->left()->is_typed(cdk::TYPE_UNSPEC) && node->right()->is_typed(cdk::TYPE_INT)) {
+    // Else if, x = U and y = I, then z = U
+    node->type(node->left()->type()); // Remains unspecified - leave decision between int and double to the parent.
+  } else if (node->left()->is_typed(cdk::TYPE_UNSPEC) && node->right()->is_typed(cdk::TYPE_UNSPEC)) {
+    // Else if, x = U and y = U, then z = U
+    node->type(node->left()->type()); // Remains unspecified - leave decision between int and double to the parent.
+  } else {
+    throw std::string("invalid operand types for addition expression");
+  }
 }
+
 void mml::type_checker::do_sub_node(cdk::sub_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  // U - U = U
+  // U - I = U
+  // U - D = D (U <- D)
+  // U - P = I (U <- P)
+  // I - U = U
+  // I - I = I
+  // I - D = D
+  // I - P = boom
+  // D - U = D (U <- D)
+  // D - I = D
+  // D - D = D
+  // D - P = boom
+  // P - U = U
+  // P - I = P
+  // P - D = boom
+  // P - P = I
+
+  if (_isPropagating) {
+    if (node->is_typed(cdk::TYPE_POINTER)) {
+      // X - Y = P, X <- P, Y <- I
+      unify_node_to_type(node->left(), node->type(), lvl + 2);
+      unify_node_to_type(node->right(), create_int(), lvl + 2);
+    } else if (node->is_typed(cdk::TYPE_INT)) {
+      if (node->left()->is_typed(cdk::TYPE_POINTER)) {
+        // P - U = I, U <- P
+        unify_node_to_type(node->left(), create_pointer(create_unspec()), lvl + 2);
+        unify_node_to_node(node->left(), node->right(), lvl + 2);
+      } else {
+        // U - U = I, U <- I
+        unify_node_to_type(node->left(), node->type(), lvl + 2);
+        unify_node_to_type(node->right(), node->type(), lvl + 2);
+      }
+    } else {
+      // Both arguments unify with the expression type, removing any previous unspecified type.
+      unify_node_to_type(node->left(), node->type(), lvl + 2);
+      unify_node_to_type(node->right(), node->type(), lvl + 2);
+    }
+  }
+
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+
+  // Given x - y = z
+  if (node->left()->is_typed(cdk::TYPE_DOUBLE)) {
+    // If x = D, then y <- D, z = D
+    unify_node_to_type(node->right(), create_double(), lvl + 2);
+    node->type(node->left()->type()); // Results in a double.
+  } else if (node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    // Else if y = D, then x <- D, z = D
+    unify_node_to_type(node->left(), create_double(), lvl + 2);
+    node->type(node->right()->type()); // Results in a double.
+  } else if (node->left()->is_typed(cdk::TYPE_UNSPEC) && node->right()->is_typed(cdk::TYPE_POINTER)) {
+    // Else if x = U and y = P, then x <- P, z = I
+    unify_node_to_type(node->left(), node->right()->type(), lvl + 2);
+    node->type(create_int()); // Results in an int.
+  } else if (node->left()->is_typed(cdk::TYPE_UNSPEC) || node->right()->is_typed(cdk::TYPE_UNSPEC)) {
+    // Else if x = U or y = U, then z = U
+    node->type(create_unspec()); // Remains unspecified - leave decision to parent.
+  } else if (node->left()->is_typed(cdk::TYPE_INT)) {
+    // Else if x = I, then y <- I, z = I
+    unify_node_to_type(node->right(), create_int(), lvl + 2);
+    node->type(node->left()->type()); // Results in an int.
+  } else if (node->left()->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
+    // Else if x = P and y = I, then z = P
+    node->type(node->left()->type()); // Results in a pointer.
+  } else if (node->left()->is_typed(cdk::TYPE_POINTER)) {
+    // Else if x = P, then x <-> y, z = I
+    unify_node_to_node(node->left(), node->right(), lvl + 2);
+    node->type(create_int()); // Results in an int.
+  } else {
+    throw std::string("invalid operand types for subtraction expression");
+  }
 }
+
+void mml::type_checker::processMulExpression(cdk::binary_operation_node *const node, int lvl) {
+  // U * U = U
+  // U * I = U
+  // U * D = D (U <- D)
+  // I * U = U
+  // I * I = I
+  // I * D = D
+  // D * U = D (U <- D)
+  // D * I = D
+  // D * D = D
+
+  if (_isPropagating) {
+    if (!node->is_typed(cdk::TYPE_INT) && !node->is_typed(cdk::TYPE_DOUBLE)) {
+      throw "multiplicative expression cannot produce a " + mml::to_string(node->type());
+    }
+
+    unify_node_to_type(node->left(), node->type(), lvl + 2);
+    unify_node_to_type(node->right(), node->type(), lvl + 2);
+    return;
+  }
+
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+
+  if (node->left()->is_typed(cdk::TYPE_DOUBLE)) {
+    // If X = D, then Y <- D, Z = D
+    unify_node_to_type(node->right(), create_double(), lvl + 2);
+    node->type(create_double()); // Results in a double.
+  } else if (node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    // Else if Y = D, then X <- D, Z = D
+    unify_node_to_type(node->left(), create_double(), lvl + 2);
+    node->type(create_double()); // Results in a double.
+  } else if (node->left()->is_typed(cdk::TYPE_UNSPEC) || node->right()->is_typed(cdk::TYPE_UNSPEC)) {
+    // If either X or Y is U, then Z = U.
+    node->type(create_unspec()); // Remains unspecified - leave decision to parent.
+  } else {
+    // Else, X <- I, Y <- I, Z = I.
+    unify_node_to_type(node->left(), create_int(), lvl + 2);
+    unify_node_to_type(node->right(), create_int(), lvl + 2);
+    node->type(create_int()); // Results in an int.
+  }
+}
+
 void mml::type_checker::do_mul_node(cdk::mul_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processMulExpression(node, lvl);
 }
 void mml::type_checker::do_div_node(cdk::div_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processMulExpression(node, lvl);
 }
 void mml::type_checker::do_mod_node(cdk::mod_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processMulExpression(node, lvl);
 }
+
+void mml::type_checker::processCmpExpression(cdk::binary_operation_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+  node->type(create_int()); // Always results in an int.
+
+  if (node->left()->is_typed(cdk::TYPE_DOUBLE)) {
+    unify_node_to_type(node->right(), create_double(), lvl + 2);
+  } else if (node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    unify_node_to_type(node->left(), create_double(), lvl + 2);
+  } else {
+    unify_node_to_type(node->left(), create_int(), lvl + 2);
+    unify_node_to_type(node->right(), create_int(), lvl + 2);
+  }
+}
+
 void mml::type_checker::do_lt_node(cdk::lt_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processCmpExpression(node, lvl);
 }
 void mml::type_checker::do_le_node(cdk::le_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processCmpExpression(node, lvl);
 }
 void mml::type_checker::do_ge_node(cdk::ge_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processCmpExpression(node, lvl);
 }
 void mml::type_checker::do_gt_node(cdk::gt_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processCmpExpression(node, lvl);
 }
+
+void mml::type_checker::processEqExpression(cdk::binary_operation_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+  node->type(create_int()); // Always results in an int.
+
+  if (node->left()->is_typed(cdk::TYPE_DOUBLE)) {
+    unify_node_to_type(node->right(), create_double(), lvl + 2);
+  } else if (node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    unify_node_to_type(node->left(), create_double(), lvl + 2);
+  } else if (node->left()->is_typed(cdk::TYPE_POINTER) || node->right()->is_typed(cdk::TYPE_POINTER)) {
+    unify_node_to_node(node->left(), node->right(), lvl + 2);
+  } else {
+    unify_node_to_type(node->left(), create_int(), lvl + 2);
+    unify_node_to_type(node->right(), create_int(), lvl + 2);
+  }
+}
+
 void mml::type_checker::do_ne_node(cdk::ne_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processEqExpression(node, lvl);
 }
 void mml::type_checker::do_eq_node(cdk::eq_node *const node, int lvl) {
-  processBinaryExpression(node, lvl);
+  processEqExpression(node, lvl);
 }
+
+void mml::type_checker::processLogicalExpression(cdk::binary_operation_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+  node->type(create_int()); // Always results in an int.
+
+  unify_node_to_type(node->left(), create_int(), lvl + 2);
+  unify_node_to_type(node->right(), create_int(), lvl + 2);
+}
+
 void mml::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
-  // EMPTY
+  processLogicalExpression(node, lvl);
 }
 void mml::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
-  // EMPTY
+  processLogicalExpression(node, lvl);
 }
 
 //---------------------------------------------------------------------------
@@ -221,40 +622,36 @@ void mml::type_checker::do_variable_node(cdk::variable_node *const node, int lvl
   if (symbol != nullptr) {
     node->type(symbol->type());
   } else {
-    throw id;
-  }
-}
-
-void mml::type_checker::do_rvalue_node(cdk::rvalue_node *const node, int lvl) {
-  ASSERT_UNSPEC;
-  try {
-    node->lvalue()->accept(this, lvl);
-    node->type(node->lvalue()->type());
-  } catch (const std::string &id) {
     throw "undeclared variable '" + id + "'";
   }
 }
 
-void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int lvl) {
+void mml::type_checker::do_rvalue_node(cdk::rvalue_node *const node, int lvl) {
+  if (_isPropagating) {
+    std::cout << "rvalue node propagating with type " << mml::to_string(node->type()) << std::endl;
+    unify_node_to_type(node->lvalue(), node->type(), lvl + 2);
+    return;
+  }
+
   ASSERT_UNSPEC;
 
-  try {
-    node->lvalue()->accept(this, lvl);
-  } catch (const std::string &id) {
-    auto symbol = std::make_shared<mml::symbol>(cdk::primitive_type::create(4, cdk::TYPE_INT), id, 0);
-    _symtab.insert(id, symbol);
-    _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
-    node->lvalue()->accept(this, lvl);  //DAVID: bah!
+  node->lvalue()->accept(this, lvl);
+  node->type(node->lvalue()->type());
+}
+
+void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int lvl) {
+  if (_isPropagating) {
+    unify_node_to_type(node->lvalue(), node->type(), lvl + 2);
+    unify_node_to_node(node->rvalue(), node->lvalue(), lvl + 2);
+    return;
   }
 
+  ASSERT_UNSPEC;
+
+  node->lvalue()->accept(this, lvl + 2);
   node->rvalue()->accept(this, lvl + 2);
 
-  try {
-    assert_cast(node->rvalue()->type(), node->lvalue()->type());
-  } catch (std::string &msg) {
-    msg = "invalid cast in assignment expression\n" + msg;
-    throw msg;
-  }
+  unify_node_to_node(node->rvalue(), node->lvalue(), lvl + 2);
 
   node->type(node->lvalue()->type());
 }
@@ -271,11 +668,13 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
 void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
   if (node->initializer()) {
     node->initializer()->accept(this, lvl + 2);
+
     if (node->type() == nullptr) {
-      node->type(node->initializer()->type());
-    } else {
-      // TODO: make sure that the type of the initializer is compatible with the variable's type
+      // Figure out the type of the variable through the initializer. Default unspecs to int.
+      node->type(default_to_int(node->initializer()->type()));
     }
+
+    unify_node_to_type(node->initializer(), node->type(), lvl + 2);
   }
 
   auto symbol = std::make_shared<mml::symbol>(node->type(), node->name(), 0);
@@ -283,31 +682,81 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
 }
 
 void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
-  // TODO: expect base type to be a pointer.
-  // TODO: expect index type to be int.
+  if (_isPropagating) {
+    // The base node must be a pointer to this node.
+    std::cout << "index node propagating with type " << mml::to_string(node->type()) << std::endl;
+    unify_node_to_type(node->base(), create_pointer(node->type()), lvl + 2);
+    return;
+  }
+
+  ASSERT_UNSPEC;
+
+  node->base()->accept(this, lvl + 2);
+  node->index()->accept(this, lvl + 2);
+
+  // Base must be a pointer to something, so we unify it with a pointer to unspec.
+  auto newType = unify_node_to_type(node->base(), create_pointer(create_unspec()), lvl + 2);
+
+  // The type is what the referenced unspec was unified to.
+  node->type(cdk::reference_type::cast(newType)->referenced());
+
+  // The index must unify to an integer.
+  unify_node_to_type(node->index(), create_int(), lvl + 2);
 }
 
 void mml::type_checker::do_address_of_node(mml::address_of_node *const node, int lvl) {
-  // TODO: find variable and set type to pointer to variable type.
+  if (_isPropagating) {
+    // The lvalue node must be the referenced type of this node.
+    unify_node_to_type(node->lvalue(), cdk::reference_type::cast(node->type())->referenced(), lvl + 2);
+    return;
+  }
+
+  ASSERT_UNSPEC;
+
+  node->lvalue()->accept(this, lvl + 2);
+
+  // No matter what, the type of this node is always a pointer to the lvalue.
+  node->type(create_pointer(node->lvalue()->type()));
 }
 
 void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
+
+  // We must unify the argument with its type but where all instances of TYPE_UNSPEC are replaced
+  // with TYPE_INT.
+  unify_node_to_type(node->argument(), default_to_int(node->argument()->type()), lvl + 2); 
 }
 
 void mml::type_checker::do_print_node(mml::print_node *const node, int lvl) {
   node->arguments()->accept(this, lvl + 2);
-  // TODO: make sure the arguments are int, real or string
+
+  for (const auto& argument : node->arguments()->nodes()) {
+    auto typed = static_cast<cdk::typed_node*>(argument);
+
+    // We only unify to int if the type is still unspecified.
+    if (typed->is_typed(cdk::TYPE_UNSPEC)) {
+      unify_node_to_type(typed, create_int(), lvl + 2);
+    } else if (!typed->is_typed(cdk::TYPE_INT) && !typed->is_typed(cdk::TYPE_DOUBLE) && !typed->is_typed(cdk::TYPE_STRING)) {
+      throw std::string("wrong type in print expression");
+    }
+  }
 }
 
 void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
-  // EMPTY
+  if (!_isPropagating) {
+    ASSERT_UNSPEC;
+
+    node->type(create_unspec());
+  } else if (!node->is_typed(cdk::TYPE_INT) && !node->is_typed(cdk::TYPE_DOUBLE)) {
+    throw std::string("input only supports integer or real numbers");
+  }
 }
 
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {
-  // TODO: set current function type to this function's type.
+  _functionType.push(std::dynamic_pointer_cast<cdk::functional_type>(node->type()));
+
   _symtab.push();
   node->arguments()->accept(this, lvl + 2);
   node->block()->accept(this, lvl + 2);
@@ -315,20 +764,71 @@ void mml::type_checker::do_function_node(mml::function_node *const node, int lvl
 }
 
 void mml::type_checker::do_call_node(mml::call_node *const node, int lvl) {
-  // TODO: if function() is null, find type of the current function
-  // TODO: check argument types.
-  // TODO: set type to function return type.
+  std::shared_ptr<cdk::functional_type> functionType;
+  
+  if (_isPropagating) {
+    // This never happens when its a recursive call, since propagations only happen when the node's
+    // type is left unspecified.
+
+    // Make sure that the function return type unifies with this node.
+    functionType = cdk::functional_type::cast(node->function()->type());
+    auto expectedFunctionType = cdk::functional_type::create(functionType->input()->components(), node->type());
+    unify_node_to_type(node->function(), expectedFunctionType, lvl + 2);
+    return;
+  }
+
+  ASSERT_UNSPEC;
+
+  node->arguments()->accept(this, lvl + 2);
+
+  if (node->function() == nullptr) {
+    if (_functionType.empty()) {
+      throw std::string("cannot call recurse outside of function definition");
+    }
+
+    functionType = _functionType.top();
+
+    if (functionType->input_length() != node->arguments()->size()) {
+      throw std::string("wrong number of arguments in recursive call");
+    }
+  } else {
+    node->function()->accept(this, lvl + 2);
+
+    // Create the expected function type.
+    std::vector<std::shared_ptr<cdk::basic_type>> inputs;
+    for (auto* node : node->arguments()->nodes()) {
+        inputs.push_back(static_cast<cdk::typed_node*>(node)->type());
+    }
+    auto expectedFunctionType = cdk::functional_type::create(inputs, create_unspec());
+
+    // Unify the function node with the expected type.
+    functionType = cdk::functional_type::cast(unify_node_to_type(node->function(), expectedFunctionType, lvl + 2));
+  }
+
+  // Unify the arguments to the expected input types.
+  // If any unspec still remains in the function inputs, it defaults to int.
+  for (std::size_t i = 0; i < node->arguments()->size(); ++i) {
+    auto typed = static_cast<cdk::typed_node*>(node->arguments()->node(i));
+    unify_node_to_type(typed, default_to_int(functionType->input(i)), lvl + 2);
+  }
+
+  node->type(functionType->output());
 }
 
 void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
-  // TODO: make sure that the return type is compatible with the current function's return type
+  if (_functionType.empty()) {
+    // Main function always returns int.
+    unify_node_to_type(node->retval(), create_int(), lvl + 2);
+  } else {
+    unify_node_to_type(node->retval(), _functionType.top()->output(), lvl + 2);
+  }
 }
 
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_while_node(mml::while_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
-  // TODO: expect condition type to be int
+  unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 
 void mml::type_checker::do_stop_node(mml::stop_node *const node, int lvl) {
@@ -343,11 +843,11 @@ void mml::type_checker::do_next_node(mml::next_node *const node, int lvl) {
 
 void mml::type_checker::do_if_node(mml::if_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
-  // TODO: expect condition type to be int
+  unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 
 void mml::type_checker::do_if_else_node(mml::if_else_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
-  // TODO: expect condition type to be int
+  unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 

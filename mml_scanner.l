@@ -23,8 +23,6 @@ bool parsedouble(const std::string& str, double& out);
 %x X_STRING X_NULL X_BACKSLASH
 
 %%
-  yydebug=1; set_debug(1);
-
   /* ====================================================================== */
   /* 3.1 - WHITESPACE                                                       */
   /* ====================================================================== */

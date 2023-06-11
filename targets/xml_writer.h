@@ -29,6 +29,7 @@ namespace mml {
     void openTag(const cdk::basic_node *node, int lvl) {
       openTag(node->label(), lvl);
     }
+    void openTag(cdk::typed_node *node, int lvl);
     void closeTag(const std::string &tag, int lvl) {
       os() << std::string(lvl, ' ') + "</" + tag + ">" << std::endl;
     }
