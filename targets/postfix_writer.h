@@ -17,11 +17,12 @@ namespace mml {
     std::shared_ptr<cdk::functional_type> _functionType;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
+    long _offset;
 
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,
                    cdk::basic_postfix_emitter &pf) :
-        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _pf(pf), _lbl(0) {
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _pf(pf), _lbl(0), _offset(0) {
     }
 
   public:
@@ -30,6 +31,8 @@ namespace mml {
     }
 
   private:
+    void processCmpExpression(cdk::binary_operation_node *const node, int lvl);
+
     /** Method used to generate sequential labels. */
     inline std::string mklbl(int lbl) {
       std::ostringstream oss;

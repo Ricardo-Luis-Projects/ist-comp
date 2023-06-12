@@ -6,35 +6,31 @@
 #include <cdk/types/basic_type.h>
 
 namespace mml {
+  class variable_declaration_node;
 
   class symbol {
-    std::shared_ptr<cdk::basic_type> _type;
-    std::string _name;
-    long _value; // hack!
+    variable_declaration_node* _node;
+    /** when offset is 0, symbol is global */
+    long _offset;
 
   public:
-    symbol(std::shared_ptr<cdk::basic_type> type, const std::string &name, long value) :
-        _type(type), _name(name), _value(value) {
+    symbol(variable_declaration_node* node) :
+        _node(node), _offset(0) {
     }
 
     virtual ~symbol() {
       // EMPTY
     }
 
-    std::shared_ptr<cdk::basic_type> type() const {
-      return _type;
+  public:
+    variable_declaration_node* node() const {
+      return _node;
     }
-    bool is_typed(cdk::typename_type name) const {
-      return _type->name() == name;
+    void offset(long value) {
+      _offset = value;
     }
-    const std::string &name() const {
-      return _name;
-    }
-    long value() const {
-      return _value;
-    }
-    long value(long v) {
-      return _value = v;
+    long offset() const {
+      return _offset;
     }
   };
 

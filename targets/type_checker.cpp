@@ -1,6 +1,7 @@
 #include <string>
 #include "targets/type_checker.h"
 #include ".auto/all_nodes.h"  // automatically generated
+#include "mml_parser.tab.h"
 #include <cdk/types/primitive_type.h>
 
 #define ASSERT_UNSPEC { if (node->type() != nullptr && !node->is_typed(cdk::TYPE_UNSPEC)) return; }
@@ -562,8 +563,16 @@ void mml::type_checker::do_mul_node(cdk::mul_node *const node, int lvl) {
 void mml::type_checker::do_div_node(cdk::div_node *const node, int lvl) {
   processMulExpression(node, lvl);
 }
+
 void mml::type_checker::do_mod_node(cdk::mod_node *const node, int lvl) {
-  processMulExpression(node, lvl);
+  ASSERT_UNSPEC;
+
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+  node->type(create_int()); // Always results in an int.
+
+  unify_node_to_type(node->left(), create_int(), lvl + 2);
+  unify_node_to_type(node->right(), create_int(), lvl + 2);
 }
 
 void mml::type_checker::processCmpExpression(cdk::binary_operation_node *const node, int lvl) {
@@ -650,7 +659,7 @@ void mml::type_checker::do_variable_node(cdk::variable_node *const node, int lvl
   std::shared_ptr<mml::symbol> symbol = _symtab.find(id);
 
   if (symbol != nullptr) {
-    node->type(symbol->type());
+    node->type(symbol->node()->type());
   } else {
     throw "undeclared variable '" + id + "'";
   }
@@ -695,6 +704,16 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
+  auto symbol = _symtab.find_local(node->name());
+  if (symbol != nullptr)
+  {
+    if (symbol->node() != node) {
+      throw std::string("variable with name '" + node->name() + "' redeclared on its scope");
+    }
+
+    return;
+  }
+
   if (node->initializer()) {
     node->initializer()->accept(this, lvl + 2);
 
@@ -707,8 +726,14 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
     default_node_to_int(node->initializer(), lvl + 2);
   }
 
-  auto symbol = std::make_shared<mml::symbol>(node->type(), node->name(), 0);
-  _symtab.insert(node->name(), symbol);
+  if (node->qualifier() == tFOREIGN) {
+    // Foreign variables must be functions.
+    if (!node->is_typed(cdk::TYPE_FUNCTIONAL)) {
+      throw std::string("foreign variable must be a function");
+    }
+  }
+
+  _symtab.insert(node->name(), std::make_shared<mml::symbol>(node));
 }
 
 void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {

@@ -18,14 +18,12 @@ namespace mml {
     cdk::symbol_table<mml::symbol> &_symtab;
     std::shared_ptr<cdk::functional_type> _functionType;
 
-    basic_ast_visitor *_parent;
-
     bool _isPropagating = false;
     bool _isTesting = false;
 
   public:
-    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType, basic_ast_visitor *parent) :
-        basic_ast_visitor(compiler), _symtab(symtab), _functionType(functionType), _parent(parent) {
+    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType) :
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(functionType) {
     }
 
   public:
@@ -66,7 +64,7 @@ namespace mml {
 
 #define CHECK_TYPES(compiler, symtab, functionType, node) { \
   try { \
-    mml::type_checker checker(compiler, symtab, functionType, this); \
+    mml::type_checker checker(compiler, symtab, functionType); \
     (node)->accept(&checker, 0); \
   } \
   catch (const std::string &problem) { \
