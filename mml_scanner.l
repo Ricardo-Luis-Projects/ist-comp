@@ -108,9 +108,9 @@ bool parsedouble(const std::string& str, double& out);
   /* 3.8.1 - INTEGERS                                                       */
   /* ====================================================================== */
 
-[1-9][0-9]*  if (!parseint(yytext, 10, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
-0[0-7]*      if (!parseint(yytext, 8, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
-0[0-7]*[8-9] yyerror("Invalid octal number");
+[1-9][0-9]*        if (!parseint(yytext, 10, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
+0[0-7]*            if (!parseint(yytext, 8, yylval.i)) yyerror("Integer overflow"); return tLINTEGER;
+0[0-7]*[8-9][0-7]* yyerror("Invalid octal number");
 
   /* ====================================================================== */
   /* 3.8.2 - FLOATING POINT NUMBERS                                         */
