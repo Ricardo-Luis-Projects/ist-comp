@@ -14,8 +14,8 @@ namespace mml {
     long _offset;
 
   public:
-    symbol(variable_declaration_node* node) :
-        _node(node), _offset(0) {
+    symbol(variable_declaration_node* node, long offset = 0) :
+        _node(node), _offset(offset) {
     }
 
     virtual ~symbol() {
@@ -23,6 +23,9 @@ namespace mml {
     }
 
   public:
+    void node(variable_declaration_node* node) {
+      _node = node;
+    }
     variable_declaration_node* node() const {
       return _node;
     }

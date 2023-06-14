@@ -4,6 +4,7 @@
 #include "targets/basic_ast_visitor.h"
 
 #include <sstream>
+#include <queue>
 #include <cdk/emitters/basic_postfix_emitter.h>
 #include <cdk/types/functional_type.h>
 
@@ -14,6 +15,7 @@ namespace mml {
   //!
   class postfix_writer: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
+    std::queue<std::pair<int, mml::function_node*>> _deferredFunctions;
     std::shared_ptr<cdk::functional_type> _functionType;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;

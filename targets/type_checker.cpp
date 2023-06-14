@@ -64,6 +64,31 @@ static std::shared_ptr<cdk::reference_type> create_pointer(std::shared_ptr<cdk::
   return cdk::reference_type::create(4, referenced);
 }
 
+static bool is_same(std::shared_ptr<cdk::basic_type> lhs, std::shared_ptr<cdk::basic_type> rhs) {
+  if (lhs->name() == cdk::TYPE_POINTER && rhs->name() == cdk::TYPE_POINTER) {
+    return is_same(cdk::reference_type::cast(lhs)->referenced(), cdk::reference_type::cast(rhs)->referenced());
+  }
+
+  if (lhs->name() == cdk::TYPE_FUNCTIONAL && rhs->name() == cdk::TYPE_FUNCTIONAL) {
+    auto lhs_func = cdk::functional_type::cast(lhs);
+    auto rhs_func = cdk::functional_type::cast(rhs);
+
+    if (lhs_func->input_length() != rhs_func->input_length()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < lhs_func->input_length(); i++) {
+      if (!is_same(lhs_func->input(i), rhs_func->input(i))) {
+        return false;
+      }
+    }
+
+    return is_same(lhs_func->output(0), rhs_func->output(0));
+  }
+
+  return lhs->name() == rhs->name();
+}
+
 static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_type>> unify(
     std::shared_ptr<cdk::basic_type> from,
     std::shared_ptr<cdk::basic_type> to) {
@@ -704,16 +729,6 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
-  auto symbol = _symtab.find_local(node->name());
-  if (symbol != nullptr)
-  {
-    if (symbol->node() != node) {
-      throw std::string("variable with name '" + node->name() + "' redeclared on its scope");
-    }
-
-    return;
-  }
-
   if (node->initializer()) {
     node->initializer()->accept(this, lvl + 2);
 
@@ -724,6 +739,28 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   
     unify_node_to_type(node->initializer(), node->type(), lvl + 2);
     default_node_to_int(node->initializer(), lvl + 2);
+  }
+
+  auto symbol = _symtab.find_local(node->name());
+  if (symbol != nullptr)
+  {
+    if (symbol->node()->qualifier() == tFORWARD) {
+      if (!is_same(node->type(), symbol->node()->type())) {
+        throw std::string("variable '" + node->name() + "' redeclared with different type");
+      }
+
+      if (node->qualifier() == tFORWARD) {
+        return;
+      } else if (node->qualifier() == tFOREIGN) {
+        throw std::string("variable '" + node->name() + "' redeclared as foreign");
+      }
+
+      symbol->node(node);
+    } else if (symbol->node() != node) {
+      throw std::string("variable '" + node->name() + "' redeclared on its scope");
+    } else {
+      return;
+    }
   }
 
   if (node->qualifier() == tFOREIGN) {
