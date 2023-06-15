@@ -754,23 +754,28 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   auto symbol = _symtab.find_local(node->name());
   if (symbol != nullptr)
   {
-    if (symbol->node()->qualifier() == tFORWARD) {
-      if (!mml::is_same(node->type(), symbol->node()->type())) {
-        throw std::string("variable '" + node->name() + "' redeclared with different type");
-      }
-
-      if (node->qualifier() == tFORWARD) {
-        return;
-      } else if (node->qualifier() == tFOREIGN) {
-        throw std::string("variable '" + node->name() + "' redeclared as foreign");
-      }
-
-      symbol->node(node);
-    } else if (symbol->node() != node) {
-      throw std::string("variable '" + node->name() + "' redeclared on its scope");
-    } else {
+    if (symbol->node() == node) {
       return;
     }
+
+    if (!mml::is_same(node->type(), symbol->node()->type())) {
+      throw std::string("variable '" + node->name() + "' redeclared with different type");
+    }
+
+    if (node->qualifier() == tFOREIGN || symbol->node()->qualifier() == tFOREIGN) {
+      throw std::string("variable '" + node->name() + "' redeclared as foreign");
+    }
+
+    if (symbol->node()->qualifier() == tFORWARD) {
+      symbol->node(node);
+      return;
+    }
+
+    if (node->qualifier() == tFORWARD) {
+      return;
+    }
+
+    throw std::string("variable '" + node->name() + "' redeclared on its scope");
   }
 
   if (node->qualifier() == tFOREIGN) {

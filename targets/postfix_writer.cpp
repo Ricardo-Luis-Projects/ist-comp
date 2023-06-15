@@ -110,6 +110,8 @@ void mml::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+
   for (size_t i = 0; i < node->size(); i++) {
     node->node(i)->accept(this, lvl);
   }
@@ -426,8 +428,6 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
   }
 
   if (_functionType == nullptr) {
-    _externSymbols.erase(node->name());
-
     if (node->initializer() == nullptr) {
       _pf.BSS();
     } else {
