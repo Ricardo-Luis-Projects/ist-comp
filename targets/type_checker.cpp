@@ -745,6 +745,10 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   
     unify_node_to_type(node->initializer(), node->type(), lvl + 2);
     default_node_to_int(node->initializer(), lvl + 2);
+
+    if (node->is_typed(cdk::TYPE_VOID)) {
+      throw std::string("variable '" + node->name() + "' cannot be of type void");
+    }
   }
 
   auto symbol = _symtab.find_local(node->name());
