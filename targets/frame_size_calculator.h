@@ -13,13 +13,15 @@ namespace mml {
     cdk::symbol_table<mml::symbol> &_symtab;
     std::shared_ptr<cdk::functional_type> _functionType;
     std::size_t _size;
+    bool _isMain;
 
   public:
-    frame_size_calculator(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType)
+    frame_size_calculator(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType, bool isMain)
       : basic_ast_visitor(compiler)
       , _symtab(symtab)
       , _functionType(functionType)
-      , _size(0) {
+      , _size(0)
+      , _isMain(isMain) {
     }
 
   public:

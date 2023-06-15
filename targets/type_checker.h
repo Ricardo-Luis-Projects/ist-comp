@@ -22,10 +22,11 @@ namespace mml {
 
     bool _isPropagating = false;
     bool _isTesting = false;
+    bool _isMain;
 
   public:
-    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType) :
-        basic_ast_visitor(compiler), _symtab(symtab), _functionType(functionType) {
+    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab, std::shared_ptr<cdk::functional_type> functionType, bool isMain) :
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(functionType), _isMain(isMain) {
     }
 
   public:
@@ -64,9 +65,9 @@ namespace mml {
 //     HELPER MACRO FOR TYPE CHECKING
 //---------------------------------------------------------------------------
 
-#define CHECK_TYPES(compiler, symtab, functionType, node) { \
+#define CHECK_TYPES(compiler, symtab, functionType, isMain, node) { \
   try { \
-    mml::type_checker checker(compiler, symtab, functionType); \
+    mml::type_checker checker(compiler, symtab, functionType, isMain); \
     (node)->accept(&checker, 0); \
   } \
   catch (const std::string &problem) { \
@@ -75,6 +76,6 @@ namespace mml {
   } \
 }
 
-#define ASSERT_SAFE_EXPRESSIONS CHECK_TYPES(_compiler, _symtab, _functionType, node)
+#define ASSERT_SAFE_EXPRESSIONS CHECK_TYPES(_compiler, _symtab, _functionType, _isMain, node)
 
 #endif

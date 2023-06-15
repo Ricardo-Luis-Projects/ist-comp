@@ -13,10 +13,11 @@ namespace mml {
   class xml_writer: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
     std::shared_ptr<cdk::functional_type> _functionType;
+    bool _isMain;
 
   public:
     xml_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab) :
-        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr) {
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _isMain(false) {
     }
 
   public:

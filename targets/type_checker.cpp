@@ -857,7 +857,9 @@ void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
 
 void mml::type_checker::do_function_node(mml::function_node *const node, int lvl) {
   auto oldFunctionType = _functionType;
+  auto oldIsMain = _isMain;
   _functionType = cdk::functional_type::cast(node->type());
+  _isMain = node->main();
 
   _symtab.push();
   node->arguments()->accept(this, lvl + 2);
@@ -865,6 +867,7 @@ void mml::type_checker::do_function_node(mml::function_node *const node, int lvl
   _symtab.pop();
 
   _functionType = oldFunctionType;
+  _isMain = oldIsMain;
 }
 
 void mml::type_checker::do_call_node(mml::call_node *const node, int lvl) {
@@ -886,7 +889,7 @@ void mml::type_checker::do_call_node(mml::call_node *const node, int lvl) {
   node->arguments()->accept(this, lvl + 2);
 
   if (node->function() == nullptr) {
-    if (_functionType == nullptr) {
+    if (_functionType == nullptr || _isMain) {
       throw std::string("cannot call recurse outside of function definition");
     }
 

@@ -21,6 +21,7 @@ namespace mml {
     std::vector<std::pair<int, int>> _loopLabels; // (next, stop)
     std::shared_ptr<cdk::functional_type> _functionType;
     int _function;
+    bool _isMain;
     std::unordered_set<std::string> _externSymbols;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
@@ -29,7 +30,7 @@ namespace mml {
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,
                    cdk::basic_postfix_emitter &pf) :
-        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _pf(pf), _lbl(0), _offset(0) {
+        basic_ast_visitor(compiler), _symtab(symtab), _functionType(nullptr), _isMain(false), _pf(pf), _lbl(0), _offset(0) {
     }
 
   public:

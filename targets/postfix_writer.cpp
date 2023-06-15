@@ -548,10 +548,11 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
   ASSERT_SAFE_EXPRESSIONS;
 
   // Get the size of the function frame.
-  mml::frame_size_calculator fsc(_compiler, _symtab, _functionType);
+  mml::frame_size_calculator fsc(_compiler, _symtab, _functionType, _isMain);
   node->block()->accept(&fsc, lvl);
 
   _functionType = cdk::functional_type::cast(node->type());
+  _isMain = node->main();
   _offset = -4; // Declarations at -4.
   _function = lbl;
 
@@ -591,6 +592,7 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
   _pf.RET();
 
   _functionType = nullptr;
+  _isMain = false;
 
   if (!_deferredFunctions.empty())
   {
