@@ -90,28 +90,12 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
   }
 }
 
-void mml::postfix_writer::wrapFunction(cdk::expression_node *const function, std::shared_ptr<cdk::functional_type> to, int lvl) {
-  /*
-  SADDR g'end
-  JMP g'end
-  TEXT
-  LABEL g'
-  ENTER 0
-  LOCAL 8
-  LDINT
-  I2D
-  ADDR g
-  BRANCH
-  TRASH 4
-  LDFVAL32
-  I2D
-  STFVAL32
-  LEAVE
-  RET
-  LABEL g'end
-  */
-
-  
+void mml::postfix_writer::externIfNeeded(std::string symbol)
+{
+  if (_externSymbols.count(symbol) == 0) {
+    _externSymbols.insert(symbol);
+    _pf.EXTERN(symbol);
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -427,13 +411,16 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
     _pf.RODATA();
     _pf.ALIGN();
     _pf.LABEL("_FOREIGN_" + node->name());
+    _pf.EXTERN(node->name());
     _pf.SADDR(node->name());
-    _externSymbols.insert(node->name());
     return;
   }
 
   if (node->qualifier() == tFORWARD) {
-    _externSymbols.insert(node->name());
+    if (symbol->node() == node) {
+      // Last declaration is this forward, must mark symbol as external.
+      _pf.EXTERN(node->name());
+    }
     return;
   }
 
@@ -583,18 +570,6 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
     // Return 0 by default.
     _pf.INT(0);
     _pf.STFVAL32();
-
-    // these are just a few library function imports
-    _pf.EXTERN("readi");
-    _pf.EXTERN("readd");
-    _pf.EXTERN("printi");
-    _pf.EXTERN("printd");
-    _pf.EXTERN("prints");
-    _pf.EXTERN("println");
-
-    for (auto& name : _externSymbols) {
-      _pf.EXTERN(name);
-    }
   } else {
     _pf.LABEL(mklbl(lbl));
     _pf.ENTER(fsc.size());
@@ -639,18 +614,22 @@ void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
     auto* typed = static_cast<cdk::typed_node*>(argument);
     typed->accept(this, lvl); // determine the value to print
     if (typed->is_typed(cdk::TYPE_INT)) {
+      externIfNeeded("printi");
       _pf.CALL("printi");
       _pf.TRASH(4); // delete the printed value
     } else if (typed->is_typed(cdk::TYPE_DOUBLE)) {
+      externIfNeeded("printd");
       _pf.CALL("printd");
       _pf.TRASH(8); // delete the printed value
     } else if (typed->is_typed(cdk::TYPE_STRING)) {
+      externIfNeeded("prints");
       _pf.CALL("prints");
       _pf.TRASH(4); // delete the printed value's address
     }
   }
 
   if (node->newline()) {
+    externIfNeeded("println");
     _pf.CALL("println");
   }
 }
@@ -660,9 +639,11 @@ void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
 void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   if (node->is_typed(cdk::TYPE_INT)) {
+    externIfNeeded("readi");
     _pf.CALL("readi");
     _pf.LDFVAL32();
   } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+    externIfNeeded("readd");
     _pf.CALL("readd");
     _pf.LDFVAL64();
   }

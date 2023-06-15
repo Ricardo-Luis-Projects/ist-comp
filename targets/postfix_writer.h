@@ -40,8 +40,8 @@ namespace mml {
   private:
     void cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to);
     void visitCast(cdk::expression_node* from, std::shared_ptr<cdk::basic_type> to, int lvl);
-    void wrapFunction(cdk::expression_node *const function, std::shared_ptr<cdk::functional_type> to, int lvl);
     void processCmpExpression(cdk::binary_operation_node *const node, int lvl);
+    void externIfNeeded(std::string symbol);
 
     /** Method used to generate sequential labels. */
     inline std::string mklbl(int lbl) {
