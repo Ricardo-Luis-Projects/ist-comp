@@ -120,7 +120,9 @@ static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_ty
     if (from->name() == cdk::TYPE_POINTER && to->name() == cdk::TYPE_POINTER) {
       auto fromReferenced = cdk::reference_type::cast(from)->referenced();
       auto toReferenced = cdk::reference_type::cast(to)->referenced();
-      if (fromReferenced->name() != cdk::TYPE_VOID && toReferenced->name() != cdk::TYPE_VOID) {
+
+      if ((fromReferenced->name() == cdk::TYPE_POINTER && toReferenced->name() == cdk::TYPE_POINTER) ||
+           fromReferenced->name() == cdk::TYPE_UNSPEC || toReferenced->name() == cdk::TYPE_UNSPEC) {
         auto [newFromReferenced, newToReferenced] = unify(fromReferenced, toReferenced);
 
         if (newFromReferenced.get() != fromReferenced.get()) {
@@ -129,6 +131,10 @@ static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_ty
 
         if (newToReferenced.get() != toReferenced.get()) {
           to = create_pointer(newToReferenced);
+        }
+      } else if (fromReferenced->name() != cdk::TYPE_VOID && toReferenced->name() != cdk::TYPE_VOID) {
+        if (!is_same(fromReferenced, toReferenced)) {
+          throw std::string("cannot unify pointers to different types");
         }
       }
 

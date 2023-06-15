@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <queue>
+#include <vector>
 #include <cdk/emitters/basic_postfix_emitter.h>
 #include <cdk/types/functional_type.h>
 
@@ -16,6 +17,7 @@ namespace mml {
   class postfix_writer: public basic_ast_visitor {
     cdk::symbol_table<mml::symbol> &_symtab;
     std::queue<std::pair<int, mml::function_node*>> _deferredFunctions;
+    std::vector<std::pair<int, int>> _loopLabels; // (next, stop)
     std::shared_ptr<cdk::functional_type> _functionType;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
@@ -33,6 +35,9 @@ namespace mml {
     }
 
   private:
+    void cast(std::shared_ptr<cdk::basic_type> from, std::shared_ptr<cdk::basic_type> to);
+    void visitCast(cdk::expression_node* from, std::shared_ptr<cdk::basic_type> to, int lvl);
+    void wrapFunction(cdk::expression_node *const function, std::shared_ptr<cdk::functional_type> to, int lvl);
     void processCmpExpression(cdk::binary_operation_node *const node, int lvl);
 
     /** Method used to generate sequential labels. */

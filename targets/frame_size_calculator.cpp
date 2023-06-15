@@ -90,8 +90,10 @@ void mml::frame_size_calculator::do_assignment_node(cdk::assignment_node *const 
     // EMPTY
 }
 void mml::frame_size_calculator::do_block_node(mml::block_node *const node, int lvl) {
+    _symtab.push();
     node->declarations()->accept(this, lvl);
     node->instructions()->accept(this, lvl);
+    _symtab.pop();
 }
 void mml::frame_size_calculator::do_variable_declaration_node(mml::variable_declaration_node *const node, int lvl) {
     ASSERT_SAFE_EXPRESSIONS;
@@ -122,7 +124,7 @@ void mml::frame_size_calculator::do_return_node(mml::return_node *const node, in
     // EMPTY
 }
 void mml::frame_size_calculator::do_while_node(mml::while_node *const node, int lvl) {
-    // EMPTY
+    node->block()->accept(this, lvl);
 }
 void mml::frame_size_calculator::do_stop_node(mml::stop_node *const node, int lvl) {
     // EMPTY
@@ -131,8 +133,9 @@ void mml::frame_size_calculator::do_next_node(mml::next_node *const node, int lv
     // EMPTY
 }
 void mml::frame_size_calculator::do_if_node(mml::if_node *const node, int lvl) {
-    // EMPTY
+    node->block()->accept(this, lvl);
 }
 void mml::frame_size_calculator::do_if_else_node(mml::if_else_node *const node, int lvl) {
-    // EMPTY
+    node->thenblock()->accept(this, lvl);
+    node->elseblock()->accept(this, lvl);
 }

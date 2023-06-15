@@ -83,7 +83,7 @@
 %type <types> argument_types
 %type <function> program function
 %type <block> block inner_block
-%type <basic> final_instruction instruction conditional
+%type <basic> any_instruction final_instruction instruction conditional
 %type <b> print_opt_newline
 %type <expression> opt_global_initializer global_initializer opt_initializer initializer call literal opt_expression expression
 %type <lvalue> lvalue
@@ -191,11 +191,15 @@ finalized_instructions : instructions                   { $$ = $1; }
                        | instructions final_instruction { $$ = new cdk::sequence_node(LINE, $2, $1); }
                        ;
 
-instruction : block                                 { $$ = $1; }
-            | expression ';'                        { $$ = new mml::evaluation_node(LINE, $1); }
-            | expressions print_opt_newline         { $$ = new mml::print_node(LINE, $1, $2); }
-            | tWHILE '(' expression ')' instruction { $$ = new mml::while_node(LINE, $3, $5); }
-            | tIF conditional                       { $$ = $2; }
+any_instruction : instruction       { $$ = $1; }
+                | final_instruction { $$ = $1; }
+                ;
+
+instruction : block                                     { $$ = $1; }
+            | expression ';'                            { $$ = new mml::evaluation_node(LINE, $1); }
+            | expressions print_opt_newline             { $$ = new mml::print_node(LINE, $1, $2); }
+            | tWHILE '(' expression ')' any_instruction { $$ = new mml::while_node(LINE, $3, $5); }
+            | tIF conditional                           { $$ = $2; }
             ;
 
 final_instruction : tSTOP opt_nesting ';'      { $$ = new mml::stop_node(LINE, $2); }
@@ -215,9 +219,9 @@ opt_expression : /* empty */ { $$ = nullptr; }
                | expression  { $$ = $1; }
                ;
 
-conditional : '(' expression ')' instruction %prec tIFX        { $$ = new mml::if_node(LINE, $2, $4); }
-            | '(' expression ')' instruction tELIF conditional { $$ = new mml::if_else_node(LINE, $2, $4, $6); }
-            | '(' expression ')' instruction tELSE instruction { $$ = new mml::if_else_node(LINE, $2, $4, $6); }
+conditional : '(' expression ')' any_instruction %prec tIFX            { $$ = new mml::if_node(LINE, $2, $4); }
+            | '(' expression ')' any_instruction tELIF conditional     { $$ = new mml::if_else_node(LINE, $2, $4, $6); }
+            | '(' expression ')' any_instruction tELSE any_instruction { $$ = new mml::if_else_node(LINE, $2, $4, $6); }
             ;
 
 expressions : expression                 { $$ = new cdk::sequence_node(LINE, $1); }
