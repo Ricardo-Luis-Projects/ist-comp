@@ -64,9 +64,9 @@ static std::shared_ptr<cdk::reference_type> create_pointer(std::shared_ptr<cdk::
   return cdk::reference_type::create(4, referenced);
 }
 
-static bool is_same(std::shared_ptr<cdk::basic_type> lhs, std::shared_ptr<cdk::basic_type> rhs) {
+bool mml::is_same(std::shared_ptr<cdk::basic_type> lhs, std::shared_ptr<cdk::basic_type> rhs) {
   if (lhs->name() == cdk::TYPE_POINTER && rhs->name() == cdk::TYPE_POINTER) {
-    return is_same(cdk::reference_type::cast(lhs)->referenced(), cdk::reference_type::cast(rhs)->referenced());
+    return mml::is_same(cdk::reference_type::cast(lhs)->referenced(), cdk::reference_type::cast(rhs)->referenced());
   }
 
   if (lhs->name() == cdk::TYPE_FUNCTIONAL && rhs->name() == cdk::TYPE_FUNCTIONAL) {
@@ -78,12 +78,12 @@ static bool is_same(std::shared_ptr<cdk::basic_type> lhs, std::shared_ptr<cdk::b
     }
 
     for (size_t i = 0; i < lhs_func->input_length(); i++) {
-      if (!is_same(lhs_func->input(i), rhs_func->input(i))) {
+      if (!mml::is_same(lhs_func->input(i), rhs_func->input(i))) {
         return false;
       }
     }
 
-    return is_same(lhs_func->output(0), rhs_func->output(0));
+    return mml::is_same(lhs_func->output(0), rhs_func->output(0));
   }
 
   return lhs->name() == rhs->name();
@@ -133,7 +133,7 @@ static std::pair<std::shared_ptr<cdk::basic_type>, std::shared_ptr<cdk::basic_ty
           to = create_pointer(newToReferenced);
         }
       } else if (fromReferenced->name() != cdk::TYPE_VOID && toReferenced->name() != cdk::TYPE_VOID) {
-        if (!is_same(fromReferenced, toReferenced)) {
+        if (!mml::is_same(fromReferenced, toReferenced)) {
           throw std::string("cannot unify pointers to different types");
         }
       }
@@ -751,7 +751,7 @@ void mml::type_checker::do_variable_declaration_node(mml::variable_declaration_n
   if (symbol != nullptr)
   {
     if (symbol->node()->qualifier() == tFORWARD) {
-      if (!is_same(node->type(), symbol->node()->type())) {
+      if (!mml::is_same(node->type(), symbol->node()->type())) {
         throw std::string("variable '" + node->name() + "' redeclared with different type");
       }
 

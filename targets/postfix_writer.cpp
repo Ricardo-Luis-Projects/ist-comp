@@ -25,6 +25,10 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
 
   auto fromFunc = cdk::functional_type::cast(from->type());
   auto toFunc = cdk::functional_type::cast(to);
+  if (is_same(fromFunc, toFunc)) {
+    from->accept(this, lvl);
+    return;
+  }
 
   int lbl1 = ++_lbl, lbl2;
 
@@ -33,9 +37,10 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
     _pf.JMP(mklbl(lbl2 = ++_lbl));
   } else {
     _pf.SADDR(mklbl(lbl1));
+    _pf.TEXT();
   }
 
-  _pf.TEXT();
+  _pf.ALIGN();
   _pf.LABEL(mklbl(lbl1));
   _pf.ENTER(0);
 
@@ -48,7 +53,7 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
     } else {
       _pf.LDINT();
     }
-    cast(toFunc->input(i), fromFunc->input(i - 1));
+    cast(toFunc->input(i - 1), fromFunc->input(i - 1));
   }
 
   from->accept(this, lvl);
@@ -431,7 +436,6 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
     } else {
       node->initializer()->accept(this, lvl);
     }
-    _pf.TEXT();
   } else {
     if (node->initializer() != nullptr) {
       visitCast(node->initializer(), node->type(), lvl);

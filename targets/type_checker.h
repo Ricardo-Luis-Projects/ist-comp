@@ -11,6 +11,8 @@ namespace mml {
    */
   std::string to_string(std::shared_ptr<cdk::basic_type> type);
 
+  bool is_same(std::shared_ptr<cdk::basic_type> lhs, std::shared_ptr<cdk::basic_type> rhs);
+
   /**
    * Print nodes as XML elements to the output stream.
    */
