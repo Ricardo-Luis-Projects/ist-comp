@@ -423,7 +423,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
 
   auto symbol = _symtab.find(node->name());
 
-  if (node->qualifier() == tFOREIGN && node->is_typed(cdk::TYPE_FUNCTIONAL)) {
+  if (node->qualifier() == tFOREIGN) {
     _pf.RODATA();
     _pf.ALIGN();
     _pf.LABEL("_FOREIGN_" + node->name());
@@ -432,7 +432,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
     return;
   }
 
-  if (node->qualifier() == tFORWARD || node->qualifier() == tFOREIGN) {
+  if (node->qualifier() == tFORWARD) {
     _externSymbols.insert(node->name());
     return;
   }
