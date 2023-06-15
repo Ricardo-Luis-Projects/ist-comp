@@ -478,7 +478,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
 void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  auto functionType = cdk::functional_type::cast(node->function()->type());
+  auto functionType = node->function() == nullptr ? _functionType : cdk::functional_type::cast(node->function()->type());
 
   // Push arguments in reverse order.
   long argsSize = 0;
@@ -488,8 +488,12 @@ void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
     visitCast(exp, functionType->input(i - 1), lvl);
   }
 
-  node->function()->accept(this, lvl);
-  _pf.BRANCH();
+  if (node->function()) {
+    node->function()->accept(this, lvl);
+    _pf.BRANCH();
+  } else {
+    _pf.CALL(mklbl(_function));
+  }
 
   // Clean up arguments before pushing the output.
   if (argsSize > 0) {
@@ -562,6 +566,7 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
 
   _functionType = cdk::functional_type::cast(node->type());
   _offset = -4; // Declarations at -4.
+  _function = lbl;
 
   _pf.TEXT();
   _pf.ALIGN();

@@ -20,6 +20,7 @@ namespace mml {
     std::queue<std::pair<int, mml::function_node*>> _deferredFunctions;
     std::vector<std::pair<int, int>> _loopLabels; // (next, stop)
     std::shared_ptr<cdk::functional_type> _functionType;
+    int _function;
     std::unordered_set<std::string> _externSymbols;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
