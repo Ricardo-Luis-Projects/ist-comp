@@ -58,8 +58,24 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
 
   from->accept(this, lvl);
   _pf.BRANCH();
-  _pf.TRASH(static_cast<int>(fromFunc->input()->size()));
+  if (fromFunc->input_length() > 0) {
+    _pf.TRASH(static_cast<int>(fromFunc->input()->size()));
+  }
+
+  if (fromFunc->output(0)->name() == cdk::TYPE_DOUBLE) {
+    _pf.LDFVAL64();
+  } else if (fromFunc->output(0)->name() != cdk::TYPE_VOID) {
+    _pf.LDFVAL32();
+  }
+  
   cast(fromFunc->output(0), toFunc->output(0));
+
+  if (toFunc->output(0)->name() == cdk::TYPE_DOUBLE) {
+    _pf.STFVAL64();
+  } else if (toFunc->output(0)->name() != cdk::TYPE_VOID) {
+    _pf.STFVAL32();
+  }
+
   _pf.LEAVE();
   _pf.RET();
 
@@ -400,9 +416,8 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
   ASSERT_SAFE_EXPRESSIONS;
 
   auto symbol = _symtab.find(node->name());
-  symbol->offset(_offset);
 
-   if (node->qualifier() == tFOREIGN && node->is_typed(cdk::TYPE_FUNCTIONAL)) {
+  if (node->qualifier() == tFOREIGN && node->is_typed(cdk::TYPE_FUNCTIONAL)) {
     _pf.RODATA();
     _pf.ALIGN();
     _pf.LABEL("_FOREIGN_" + node->name());
@@ -437,6 +452,8 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
       node->initializer()->accept(this, lvl);
     }
   } else {
+    symbol->offset(_offset);
+
     if (node->initializer() != nullptr) {
       visitCast(node->initializer(), node->type(), lvl);
       _pf.LOCAL(_offset);
@@ -469,7 +486,9 @@ void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
   _pf.BRANCH();
 
   // Clean up arguments before pushing the output.
-  _pf.TRASH(argsSize);
+  if (argsSize > 0) {
+    _pf.TRASH(argsSize);
+  }
 
   if (functionType->output(0)->name() == cdk::TYPE_DOUBLE) {
     _pf.LDFVAL64();
