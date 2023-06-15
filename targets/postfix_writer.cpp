@@ -395,12 +395,14 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
   auto symbol = _symtab.find(node->name());
   symbol->offset(_offset);
 
-  if (node->qualifier() == tFORWARD || node->qualifier() == tFOREIGN) {
-    _pf.EXTERN(node->name());
+  if (node->qualifier() == tFOREIGN || node->qualifier() == tFORWARD) {
+    _externSymbols.insert(node->name());
     return;
   }
 
   if (_functionType == nullptr) {
+    _externSymbols.erase(node->name());
+
     if (node->initializer() == nullptr) {
       _pf.BSS();
     } else {
@@ -544,6 +546,10 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
     _pf.EXTERN("printd");
     _pf.EXTERN("prints");
     _pf.EXTERN("println");
+
+    for (auto& name : _externSymbols) {
+      _pf.EXTERN(name);
+    }
   } else {
     _pf.LABEL(mklbl(lbl));
     _pf.ENTER(fsc.size());

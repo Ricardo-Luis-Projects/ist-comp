@@ -6,6 +6,7 @@
 #include <sstream>
 #include <queue>
 #include <vector>
+#include <unordered_set>
 #include <cdk/emitters/basic_postfix_emitter.h>
 #include <cdk/types/functional_type.h>
 
@@ -19,6 +20,7 @@ namespace mml {
     std::queue<std::pair<int, mml::function_node*>> _deferredFunctions;
     std::vector<std::pair<int, int>> _loopLabels; // (next, stop)
     std::shared_ptr<cdk::functional_type> _functionType;
+    std::unordered_set<std::string> _externSymbols;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
     long _offset;
