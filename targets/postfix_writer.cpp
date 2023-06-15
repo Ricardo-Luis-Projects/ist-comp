@@ -36,7 +36,7 @@ void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::share
     return;
   }
 
-  int lbl1 = ++_lbl, lbl2;
+  int lbl1 = ++_lbl, lbl2 = 0;
 
   if (_functionType != nullptr) {
     _pf.ADDR(mklbl(lbl1));
@@ -540,7 +540,7 @@ void mml::postfix_writer::do_stack_alloc_node(mml::stack_alloc_node *const node,
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_function_node(mml::function_node * const node, int lvl) {
-  int lbl;
+  int lbl = 0;
 
   if (_functionType != nullptr) {
     // Nested function! Defer its definition to the end of the parent function.
