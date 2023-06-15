@@ -18,6 +18,12 @@ void mml::postfix_writer::cast(std::shared_ptr<cdk::basic_type> from, std::share
 
 void mml::postfix_writer::visitCast(cdk::expression_node *const from, std::shared_ptr<cdk::basic_type> to, int lvl) {
   if (!from->is_typed(cdk::TYPE_FUNCTIONAL)) {
+    if (_functionType == nullptr && to->name() == cdk::TYPE_DOUBLE && from->is_typed(cdk::TYPE_INT)) {
+      auto integer = static_cast<cdk::literal_node<int>*>(from);
+      _pf.SDOUBLE(static_cast<double>(integer->value()));
+      return;
+    }
+
     from->accept(this, lvl);
     cast(from->type(), to);
     return;
@@ -449,7 +455,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
     if (node->initializer() == nullptr) {
       _pf.SALLOC(node->type()->size());
     } else {
-      node->initializer()->accept(this, lvl);
+      visitCast(node->initializer(), node->type(), lvl);
     }
   } else {
     symbol->offset(_offset);
