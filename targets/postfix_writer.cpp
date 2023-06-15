@@ -190,8 +190,8 @@ void mml::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
     _pf.SUB();
   }
 
-  if (node->is_typed(cdk::TYPE_POINTER)) {
-    auto referenced = cdk::reference_type::cast(node->type())->referenced();
+  if (node->is_typed(cdk::TYPE_INT) && node->left()->is_typed(cdk::TYPE_POINTER)) {
+    auto referenced = cdk::reference_type::cast(node->left()->type())->referenced();
     _pf.INT(referenced->size() == 0 ? 1 : referenced->size());
     _pf.DIV();
   }
