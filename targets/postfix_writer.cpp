@@ -11,7 +11,7 @@ void mml::postfix_writer::cast(std::shared_ptr<cdk::basic_type> from, std::share
     _pf.I2D();
   } else if (to->name() == cdk::TYPE_POINTER && from->name() == cdk::TYPE_INT) {
     auto referenced = cdk::reference_type::cast(to)->referenced();
-    _pf.INT(referenced->size());
+    _pf.INT(referenced->size() == 0 ? 1 : referenced->size());
     _pf.MUL();
   }
 }
@@ -208,7 +208,7 @@ void mml::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
 
   if (node->is_typed(cdk::TYPE_POINTER)) {
     auto referenced = cdk::reference_type::cast(node->type())->referenced();
-    _pf.INT(referenced->size());
+    _pf.INT(referenced->size() == 0 ? 1 : referenced->size());
     _pf.DIV();
   }
 }
@@ -518,7 +518,7 @@ void mml::postfix_writer::do_index_node(mml::index_node *const node, int lvl) {
   node->index()->accept(this, lvl);
   
   auto referenced = cdk::reference_type::cast(node->base()->type())->referenced();
-  _pf.INT(referenced->size());
+  _pf.INT(referenced->size() == 0 ? 1 : referenced->size());
   _pf.MUL();
   _pf.ADD();
 }
