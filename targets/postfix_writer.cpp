@@ -295,7 +295,9 @@ void mml::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
 void mml::postfix_writer::do_variable_node(cdk::variable_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   auto symbol = _symtab.find(node->name());
-  if (symbol->offset() == 0) {
+  if (symbol->node()->qualifier() == tFOREIGN) {
+    _pf.ADDR("_FOREIGN_" + node->name());
+  } else if (symbol->offset() == 0) {
     _pf.ADDR(node->name());
   } else {
     _pf.LOCAL(symbol->offset());
@@ -395,7 +397,16 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
   auto symbol = _symtab.find(node->name());
   symbol->offset(_offset);
 
-  if (node->qualifier() == tFOREIGN || node->qualifier() == tFORWARD) {
+   if (node->qualifier() == tFOREIGN && node->is_typed(cdk::TYPE_FUNCTIONAL)) {
+    _pf.RODATA();
+    _pf.ALIGN();
+    _pf.LABEL("_FOREIGN_" + node->name());
+    _pf.SADDR(node->name());
+    _externSymbols.insert(node->name());
+    return;
+  }
+
+  if (node->qualifier() == tFORWARD || node->qualifier() == tFOREIGN) {
     _externSymbols.insert(node->name());
     return;
   }
