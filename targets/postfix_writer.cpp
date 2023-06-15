@@ -371,7 +371,8 @@ void mml::postfix_writer::do_return_node(mml::return_node *const node, int lvl) 
 
 void mml::postfix_writer::do_stop_node(mml::stop_node *const node, int lvl) {
   if (static_cast<std::size_t>(node->nesting()) > _loopLabels.size() || node->nesting() < 1) {
-    throw new std::string("invalid nesting level for stop instruction");
+    std::cerr << (node)->lineno() << ": invalid nesting level for stop instruction" << std::endl;
+    return;
   }
 
   auto lbl = _loopLabels[_loopLabels.size() - node->nesting()].second;
@@ -380,7 +381,7 @@ void mml::postfix_writer::do_stop_node(mml::stop_node *const node, int lvl) {
 
 void mml::postfix_writer::do_next_node(mml::next_node *const node, int lvl) {
   if (static_cast<std::size_t>(node->nesting()) > _loopLabels.size() || node->nesting() < 1) {
-    throw new std::string("invalid nesting level for next instruction");
+    std::cerr << (node)->lineno() << ": invalid nesting level for next instruction" << std::endl;
   }
 
   auto lbl = _loopLabels[_loopLabels.size() - node->nesting()].first;
