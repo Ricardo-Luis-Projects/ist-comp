@@ -310,7 +310,7 @@ void mml::postfix_writer::do_variable_node(cdk::variable_node * const node, int 
   auto symbol = _symtab.find(node->name());
   if (symbol->node()->qualifier() == tFOREIGN) {
     _pf.ADDR("_FOREIGN_" + node->name());
-  } else if (symbol->offset() == 0) {
+  } else if (symbol->offset() == 1) {
     _pf.ADDR(node->name());
   } else {
     _pf.LOCAL(symbol->offset());
@@ -446,6 +446,7 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
       visitCast(node->initializer(), node->type(), lvl);
     }
   } else {
+    _offset -= node->type()->size();
     symbol->offset(_offset);
 
     if (node->initializer() != nullptr) {
@@ -457,9 +458,6 @@ void mml::postfix_writer::do_variable_declaration_node(mml::variable_declaration
         _pf.STINT();
       }
     }
-
-    // Local variable, decrement offset.
-    _offset -= node->type()->size();
   }
 }
 
@@ -472,8 +470,8 @@ void mml::postfix_writer::do_call_node(mml::call_node *const node, int lvl) {
   long argsSize = 0;
   for (auto i = node->arguments()->size(); i > 0; --i) {
     auto exp = static_cast<cdk::expression_node*>(node->arguments()->node(i - 1));
-    argsSize += exp->type()->size();
     visitCast(exp, functionType->input(i - 1), lvl);
+    argsSize += functionType->input(i - 1)->size();
   }
 
   if (node->function()) {
@@ -554,7 +552,7 @@ void mml::postfix_writer::do_function_node(mml::function_node * const node, int 
 
   _functionType = cdk::functional_type::cast(node->type());
   _isMain = node->main();
-  _offset = -4; // Declarations at -4.
+  _offset = 0;
   _function = lbl;
 
   _pf.TEXT();

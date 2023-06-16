@@ -10,11 +10,11 @@ namespace mml {
 
   class symbol {
     variable_declaration_node* _node;
-    /** when offset is 0, symbol is global */
+    /** when offset is 1, symbol is global */
     long _offset;
 
   public:
-    symbol(variable_declaration_node* node, long offset = 0) :
+    symbol(variable_declaration_node* node, long offset = 1) :
         _node(node), _offset(offset) {
     }
 
