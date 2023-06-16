@@ -959,6 +959,7 @@ void mml::type_checker::do_return_node(mml::return_node *const node, int lvl) {
 
 void mml::type_checker::do_while_node(mml::while_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
+  node->block()->accept(this, lvl + 2);
   unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 
@@ -974,11 +975,14 @@ void mml::type_checker::do_next_node(mml::next_node *const node, int lvl) {
 
 void mml::type_checker::do_if_node(mml::if_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
+  node->block()->accept(this, lvl + 2);
   unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 
 void mml::type_checker::do_if_else_node(mml::if_else_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 2);
+  node->thenblock()->accept(this, lvl + 2);
+  node->elseblock()->accept(this, lvl + 2);
   unify_node_to_type(node->condition(), create_int(), lvl + 2);
 }
 
