@@ -1,0 +1,34 @@
+public int white = 0;
+public int red = 1;
+public int green = 2;
+public int blue = 3;
+
+auto printColor = (int color) -> void {
+    if (color == white)
+        "\033[0m"!
+    else if (color == red)
+        "\033[31m"!
+    else if (color == green)
+        "\033[32m"!
+    else if (color == blue)
+        "\033[34m"!
+    else
+        "\033[0m"!
+};
+
+public display = (int w, int h, string<int, int, [int]> fragment) -> void {
+    int y = 0;
+
+    while (y < h) {
+        int x = 0;
+        while (x < w) {
+            int color = white;
+            string symbol = fragment(x, y, color?);
+            printColor(color);
+            symbol!
+            x = x + 1;
+        }
+        ""!!
+        y = y + 1;
+    }
+};

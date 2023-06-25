@@ -1,0 +1,132 @@
+public sqrt = (double x) -> double {
+    double accuracy = 0.001;
+    double lower;
+    double upper;
+
+    if (x < 1) {
+        lower = x;
+        upper = 1;
+    } else {
+        lower = 1;
+        upper = x;
+    }
+
+    while ((upper - lower) > accuracy) {
+        double guess = (lower + upper) / 2;
+        if (guess * guess > x)
+            upper = guess;
+        else
+            lower = guess;
+    }
+
+    return (lower + upper) / 2;
+};
+
+public vec2 = (double x, double y, [double] mem) -> [double] {
+    mem[0] = x;
+    mem[1] = y;
+    return mem;
+};
+
+public vec3 = (double x, double y, double z, [double] mem) -> [double] {
+    mem[2] = z;
+    return vec2(x, y, mem);
+};
+
+public dot2 = ([double] a, [double] b) -> double {
+    return a[0] * b[0] + a[1] * b[1];
+};
+
+public dot3 = ([double] a, [double] b) -> double {
+    return dot2(a, b) + a[2] * b[2];
+};
+
+public len2sq = ([double] vec2) -> double {
+    return dot2(vec2, vec2);
+};
+
+public len2 = ([double] vec2) -> double {
+    return sqrt(len2sq(vec2));
+};
+
+public len3sq = ([double] vec3) -> double {
+    return dot3(vec3, vec3);
+};
+
+public len3 = ([double] vec3) -> double {
+    return sqrt(len3sq(vec3));
+};
+
+public add2 = ([double] a, [double] b, [double] out) -> [double] {
+    out[0] = a[0] + b[0];
+    out[1] = a[1] + b[1];
+    return out;
+};
+
+public add3 = ([double] a, [double] b, [double] out) -> [double] {
+    out[2] = a[2] + b[2];
+    return add2(a, b, out);
+};
+
+public sub2 = ([double] a, [double] b, [double] out) -> [double] {
+    out[0] = a[0] - b[0];
+    out[1] = a[1] - b[1];
+    return out;
+};
+
+public sub3 = ([double] a, [double] b, [double] out) -> [double] {
+    out[2] = a[2] - b[2];
+    return sub2(a, b, out);
+};
+
+public mul2 = ([double] a, double b, [double] out) -> [double] {
+    out[0] = a[0] * b;
+    out[1] = a[1] * b;
+    return out;
+};
+
+public mul3 = ([double] a, double b, [double] out) -> [double] {
+    out[2] = a[2] * b;
+    return mul2(a, b, out);
+};
+
+public distance2sq = ([double] a, [double] b) -> double {
+    return len2sq(sub2(a, b, [2]));
+};
+
+public distance2 = ([double] a, [double] b) -> double {
+    return sqrt(distance2sq(a, b));
+};
+
+public distance3sq = ([double] a, [double] b) -> double {
+    return len3sq(sub3(a, b, [3]));
+};
+
+public distance3 = ([double] a, [double] b) -> double {
+    return sqrt(distance3sq(a, b));
+};
+
+public cos = (double x) -> double {
+    while (x < 0)
+        x = x + 6.283185307179586;
+    while (x > 6.283185307179586)
+        x = x - 6.283185307179586;
+
+    {
+        double x2 = x * x;
+        double x4 = x2 * x2;
+        double x6 = x4 * x2;
+        double x8 = x4 * x4;
+        double x10 = x8 * x2;
+        double x12 = x8 * x4;
+        double x14 = x12 * x2;
+        double x16 = x12 * x4;
+        double x18 = x16 * x2;
+
+        return 1 - x2 / 2 + x4 / 24 - x6 / 720 + x8 / 40320 - x10 / 3628800 + x12 / 479001600.0 - x14 / 87178291200.0 + x16 / 20922789888000.0 - x18 / 6402373705728000.0;
+    }
+};
+
+public sin = (double x) -> double {
+    return cos(x - 1.5707963267948966);
+};
