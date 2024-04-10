@@ -31,6 +31,9 @@
 *.tab.c
 *.tab.h
 
+*.asm
+docs
+.nix-init
 .vscode
 .auto
 mml

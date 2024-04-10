@@ -1,0 +1,179 @@
+int w = 40;
+int h = 15;
+
+[string] fb;
+
+int aspectRatio = 2;
+int scale = 2;
+int maxSteps = 25;
+
+[int] sphere1;
+[int] sphere2;
+
+auto ternary = (int i, int a, int b) -> int {
+    if (i)
+        return a;
+    else
+        return b;
+};
+
+auto vec3 = (int x, int y, int z, [int] mem) -> [int] {
+    mem[0] = x;
+    mem[1] = y;
+    mem[2] = z;
+    return mem;
+};
+
+auto sphere = (int x, int y, int z, int r, [int] mem) -> [int] {
+    mem[3] = r;
+    return vec3(x, y, z, mem);
+};
+
+auto inSphere = ([int] sphere, [int] point) -> int {   
+    int i = 0;
+    int dist = 0;
+
+    while (i < 3) {
+        dist = dist + (sphere[i] - point[i]) * (sphere[i] - point[i]);
+        i = i + 1;
+    }
+
+    return dist < sphere[3] * sphere[3];
+};
+
+auto raycast = ([int] origin, [int] dir) -> int {
+    int steps = 0;
+
+    while (steps < maxSteps) {
+        if (inSphere(sphere1, origin) || inSphere(sphere2, origin)) {
+            return steps;
+        }
+
+        origin[0] = origin[0] + dir[0];
+        origin[1] = origin[1] + dir[1];
+        origin[2] = origin[2] + dir[2];
+        steps = steps + 1;
+    }
+
+    return steps;
+};
+
+auto fragString = (int x, int y) -> string {
+    int maxDensity = 8;
+
+    auto origin = vec3(x - w / 2, (y - h / 2) * aspectRatio, 0, [3]);
+    auto dir = vec3(0, 0, 1, [3]);
+    auto steps = raycast(origin, dir);
+    auto density = maxDensity - ((steps * maxDensity) / maxSteps);
+
+    if (density == 0)
+        return " ";
+    else if (density == 1)
+        return ".";
+    else if (density == 2)
+        return ":";
+    else if (density == 3)
+        return ";";
+    else if (density == 4)
+        return "t";
+    else if (density == 5)
+        return "%";
+    else if (density == 6)
+        return "S";
+    else if (density == 7)
+        return "X";
+    else if (density == 8)
+        return "@";
+    else
+        return "?";
+};
+
+auto bufferFill = (string s) -> void {
+    int i = 0;
+    while (i < w * h) {
+        fb[i] = s;
+        i = i + 1;
+    }
+};
+
+auto bufferSet = (int x, int y, string s) -> void {
+    fb[y * w + x] = s;
+};
+
+auto bufferDisplay = () -> void {
+    int y = 0;
+
+    while (y < h) {
+        int x = 0;
+        while (x < w) {
+            fb[y * w + x]!
+            x = x + 1;
+        }
+        ""!!
+        y = y + 1;
+    }
+};
+
+auto draw = () -> void {
+    int x = 0;
+    while (x < w) {
+        int y = 0;
+        while (y < h) {
+            bufferSet(x, y, fragString(x, y));
+            y = y + 1;
+        }
+        x = x + 1;
+    }
+    bufferDisplay();
+};
+
+auto sleep = (int count) -> void {
+    count = count * 100000;
+    while (count > 0) {
+        count = count - 1;
+    }
+};
+
+begin
+
+    fb = [w * h];
+
+    // Init scene.
+    sphere1 = sphere(-10, 2, 20, 9, [4]);
+    sphere2 = sphere(10, -2, 20, 9, [4]);
+
+    while (1) {
+
+        int dx1 = ternary(sphere1[2] < 20, 1, -1);
+        int dz1 = ternary(sphere1[0] < 0, -1, 1);
+
+        int dx2 = ternary(sphere2[2] < 20, 1, -1);
+        int dz2 = ternary(sphere2[0] < 0, -1, 1);
+
+        sphere1[0] = sphere1[0] + dx1;
+        sphere1[2] = sphere1[2] + dz1;
+        sphere2[0] = sphere2[0] + dx2;
+        sphere2[2] = sphere2[2] + dz2;
+
+        if (sphere1[0] < -10)
+            sphere1[0] = -10;
+        if (sphere1[0] > 10)
+            sphere1[0] = 10;
+        if (sphere1[2] < 10)
+            sphere1[2] = 10;
+        if (sphere1[2] > 30)
+            sphere1[2] = 30;
+
+        if (sphere2[0] < -10)
+            sphere2[0] = -10;
+        if (sphere2[0] > 10)
+            sphere2[0] = 10;
+        if (sphere2[2] < 10)
+            sphere2[2] = 10;
+        if (sphere2[2] > 30)
+            sphere2[2] = 30;
+
+        draw();
+        sleep(40);
+    }
+end
